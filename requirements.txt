@@ -7,7 +7,7 @@ uvicorn[standard]==0.27.0
 pydantic==2.5.3
 
 # ML & NLP (Switched to PyTorch CPU which is lighter than TensorFlow)
---index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.2.0
 transformers==4.36.0
 numpy==1.26.2
