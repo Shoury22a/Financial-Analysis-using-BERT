@@ -1,0 +1,20 @@
+# FINSIGHT AI - Docker Compose
+# For local development and testing
+
+version: '3.8'
+
+services:
+  finsight-api:
+    build: .
+    container_name: finsight-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - TF_CPP_MIN_LOG_LEVEL=2
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

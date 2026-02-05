@@ -1,0 +1,19 @@
+# FINSIGHT AI - Production Dependencies
+# For Docker deployment
+
+# Core
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+
+# ML & NLP
+tensorflow==2.15.0
+transformers==4.36.0
+numpy==1.26.2
+
+# Finance Data
+yfinance==0.2.36
+pandas==2.1.4
+
+# Utils
+python-multipart==0.0.6
