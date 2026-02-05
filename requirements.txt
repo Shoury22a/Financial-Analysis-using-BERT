@@ -1,13 +1,14 @@
 # FINSIGHT AI - Production Dependencies
-# For Docker deployment
+# Optimized for Render (512MB RAM)
 
 # Core
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.5.3
 
-# ML & NLP
-tensorflow==2.15.0
+# ML & NLP (Switched to PyTorch CPU which is lighter than TensorFlow)
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.2.0
 transformers==4.36.0
 numpy==1.26.2
 

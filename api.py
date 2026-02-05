@@ -9,8 +9,8 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-import tensorflow as tf
-from transformers import TFBertForSequenceClassification, BertTokenizer
+import torch
+from transformers import BertForSequenceClassification, BertTokenizer
 import numpy as np
 import yfinance as yf
 from datetime import datetime, timedelta
@@ -34,9 +34,11 @@ app.add_middleware(
 )
 
 # ==================== MODEL LOADING ====================
-print("Loading FinBERT model...")
-model = TFBertForSequenceClassification.from_pretrained("ProsusAI/finbert", num_labels=3)
+print("Loading FinBERT model (PyTorch)...")
+# PyTorch is much more memory efficient for inference on CPU
+model = BertForSequenceClassification.from_pretrained("ProsusAI/finbert")
 tokenizer = BertTokenizer.from_pretrained("ProsusAI/finbert")
+model.eval() # Set to evaluation mode
 label_map = {0: "Positive", 1: "Negative", 2: "Neutral"}
 print("Model loaded successfully!")
 
@@ -117,9 +119,11 @@ class StockAnalysisRequest(BaseModel):
 
 # ==================== HELPER FUNCTIONS ====================
 def predict_sentiment(text: str) -> tuple:
-    encodings = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="tf")
-    logits = model(encodings.data)[0]
-    probs = tf.nn.softmax(logits, axis=-1).numpy()[0]
+    inputs = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="pt")
+    
+    with torch.no_grad():
+        outputs = model(**inputs)
+        probs = torch.nn.functional.softmax(outputs.logits, dim=-1).numpy()[0]
     
     positive_prob = probs[0]
     negative_prob = probs[1]
