@@ -4,6 +4,7 @@ from transformers import TFBertForSequenceClassification, BertTokenizer
 import numpy as np
 import os
 import yfinance as yf
+from yahooquery import Ticker
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import pandas as pd
@@ -511,46 +512,84 @@ def search_companies(query):
     return matches[:15]
 
 def get_stock_data(ticker, period="1mo"):
-    """Fetch stock data with multi-strategy fallback to handle environment restrictions"""
+    """
+    ULTRA-ROBUST FETCHING:
+    Strategy 1: YahooQuery (Uses internal Yahoo API, best for cloud)
+    Strategy 2: yFinance History (Standard fallback)
+    Strategy 3: yFinance Download (Final fallback)
+    """
     try:
         session = get_yf_session()
         
-        # Strategy 1: yf.Ticker (Standard)
+        # --- STRATEGY 1: yahooquery (Most resilient) ---
+        try:
+            yq_ticker = Ticker(ticker, session=session, retry=3, timeout=10)
+            # yahooquery history returns a dataframe for one ticker or a dict for multiple
+            yq_hist = yq_ticker.history(period=period)
+            
+            if isinstance(yq_hist, pd.DataFrame) and not yq_hist.empty:
+                # Fix index if it's multi-index (common in yahooquery)
+                if isinstance(yq_hist.index, pd.MultiIndex):
+                    yq_hist = yq_hist.xs(ticker)
+                
+                # Fetch info using yahooquery (internal API)
+                info = {}
+                try:
+                    summary = yq_ticker.summary_profile.get(ticker, {})
+                    price = yq_ticker.price.get(ticker, {})
+                    quote = yq_ticker.quote_type.get(ticker, {})
+                    
+                    info = {
+                        'longName': price.get('longName') or quote.get('longName') or ticker,
+                        'sector': summary.get('sector') or 'N/A',
+                        'industry': summary.get('industry') or 'N/A',
+                        'currency': price.get('currency') or 'USD',
+                        'marketCap': price.get('marketCap'),
+                        'fiftyTwoWeekHigh': price.get('fiftyTwoWeekHigh'),
+                        'fiftyTwoWeekLow': price.get('fiftyTwoWeekLow'),
+                        'previousClose': price.get('regularMarketPreviousClose')
+                    }
+                except:
+                    pass
+                
+                # Double check naming for India/International stocks
+                if not info.get('longName') or info['longName'] == ticker:
+                    if ticker in GLOBAL_STOCKS:
+                        info['longName'] = GLOBAL_STOCKS[ticker][0]
+                
+                return yq_hist, info
+        except Exception as e:
+            print(f"DEBUG: YahooQuery failed for {ticker}: {e}")
+
+        # --- STRATEGY 2: yfinance (Fallback) ---
         stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
         
-        # Strategy 2: yf.download (Fallback for cloud IPs)
-        if hist is None or hist.empty:
-            print(f"DEBUG: Ticker search failed for {ticker}, trying download fallback...")
-            hist = yf.download(ticker, period=period, progress=False, session=session, auto_adjust=True)
-        
-        # If we have data, try to get info
         if hist is not None and not hist.empty:
             info = {}
             try:
-                # Ticker info is most sensitive to blocking
                 info = stock.info
             except:
                 pass
             
-            # Fill minimal info if blocked or missing
             if not info or 'longName' not in info:
                 if ticker in GLOBAL_STOCKS:
                     name, region, sector = GLOBAL_STOCKS[ticker]
-                    info = {
-                        'longName': name, 
-                        'sector': sector, 
-                        'currency': 'INR' if '.NS' in ticker else 'USD',
-                        'symbol': ticker
-                    }
-                else:
-                    info = {'longName': ticker, 'symbol': ticker, 'currency': 'USD'}
+                    info = {'longName': name, 'sector': sector, 'currency': 'INR' if '.NS' in ticker else 'USD'}
             
             return hist, info
-        
+
+        # --- STRATEGY 3: yf.download (Last resort) ---
+        hist = yf.download(ticker, period=period, progress=False, session=session, auto_adjust=True)
+        if hist is not None and not hist.empty:
+            info = {'longName': ticker, 'currency': 'USD'}
+            if ticker in GLOBAL_STOCKS:
+                info['longName'] = GLOBAL_STOCKS[ticker][0]
+            return hist, info
+
         return None, None
     except Exception as e:
-        print(f"DEBUG: All fetch strategies failed for {ticker}: {e}")
+        print(f"DEBUG: All stock fetching strategies failed for {ticker}: {e}")
         return None, None
 
 def calculate_technical_indicators(df):
