@@ -1,5 +1,6 @@
-# FINSIGHT AI - Production Dependencies
+--extra-index-url https://download.pytorch.org/whl/cpu
 fastapi==0.109.0
+torch
 uvicorn[standard]==0.27.0
 pydantic==2.5.3
 torch

@@ -19,8 +19,6 @@ WORKDIR $HOME/app
 
 # Copy requirements and install
 COPY --chown=user requirements.txt .
-# Install CPU-only PyTorch to save 2GB+ space and speed up build
-RUN pip install --no-cache-dir --user torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Copy application code

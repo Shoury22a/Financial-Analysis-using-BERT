@@ -702,20 +702,8 @@ def get_region_badge(region):
 # 1. Market Ticker Section (Interactive)
 @st.cache_data(ttl=300)
 def get_ticker_data():
-    # Expanded Global List (Indices, Tech, Crypto, Asia, EU)
-    symbols = [
-        'SPY', 'QQQ', 'BTC-USD', 'ETH-USD', # Global/Crypto
-        'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'GOOGL', 'AMD', # US Tech
-        'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', # India
-        '005930.KS', '7203.T', '9988.HK', # Asia
-        'SAP', 'ASML', 'LVMUY' # Europe
-    ]
-    
-    ticker_html = """
-    <div class="ticker-container">
-        <div class="ticker-content">
-    """
-    
+    symbols = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'RELIANCE.NS', 'TCS.NS', '005930.KS', 'BTC-USD']
+    ticker_html = '<div class="ticker-container"><div class="ticker-content">'
     for sym in symbols:
         try:
             quote = finnhub_client.quote(sym)
@@ -724,25 +712,12 @@ def get_ticker_data():
             
             if price == 0: continue
             
-            # Clean Symbol Name
-            display_name = sym.split('.')[0]
-            if "USD" in sym: display_name = sym # Keep Crypto full
-            
+            symbol_clean = sym.split('.')[0]
             color_class = "price-up" if change >= 0 else "price-down"
             arrow = "▲" if change >= 0 else "▼"
-            
-            # Interactive Link -> Reloads app with ?ticker=SYMBOL
-            ticker_html += f'''
-            <a href="/?ticker={sym}" target="_self" style="text-decoration: none;">
-                <span class="ticker-item hover-effect">
-                    <span style="color: #e2e8f0;">{display_name}</span>: 
-                    <span class="{color_class}">{price:,.2f} ({arrow}{abs(change):.2f}%)</span>
-                </span>
-            </a>
-            '''
+            ticker_html += f'<span class="ticker-item">{symbol_clean}: <span class="{color_class}">{price:,.2f} ({arrow}{abs(change):.2f}%)</span></span>'
         except:
             continue
-            
     ticker_html += '</div></div>'
     return ticker_html
 
