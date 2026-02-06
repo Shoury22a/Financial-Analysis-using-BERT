@@ -1,4 +1,5 @@
-# FINSIGHT AI - Docker Image (Optimized for Render 512MB RAM)
+# FINSIGHT AI - Docker Image
+# Multi-stage build for smaller image size
 
 FROM python:3.10-slim as builder
 
@@ -11,32 +12,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy and install requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Production stage
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copy installed packages from builder to global location
-COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Copy installed packages from builder
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
 
 # Copy application code
 COPY api.py .
 COPY prediction.py .
 
-# Pre-download the model during build (PyTorch)
-RUN python -c "from transformers import BertForSequenceClassification, BertTokenizer; \
-    BertForSequenceClassification.from_pretrained('ProsusAI/finbert'); \
+# Pre-download the model during build
+RUN python -c "from transformers import TFBertForSequenceClassification, BertTokenizer; \
+    TFBertForSequenceClassification.from_pretrained('ProsusAI/finbert'); \
     BertTokenizer.from_pretrained('ProsusAI/finbert')"
 
-# Expose port (Render defaults to 8000 but probes for any)
+# Expose port
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
-# Run the application (using single worker to save memory)
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Run the application
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]

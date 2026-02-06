@@ -1,6 +1,6 @@
 import streamlit as st
-import torch
-from transformers import BertForSequenceClassification, BertTokenizer
+import tensorflow as tf
+from transformers import TFBertForSequenceClassification, BertTokenizer
 import numpy as np
 import os
 import yfinance as yf
@@ -423,11 +423,10 @@ weights_path = os.path.join(model_save_dir, "bert_weights.h5")
 
 @st.cache_resource
 def load_model():
-    # Use pre-trained FinBERT directly - it's already trained on financial sentiment (PyTorch)
-    print("Loading FinBERT model (PyTorch)...")
-    model = BertForSequenceClassification.from_pretrained("ProsusAI/finbert")
+    # Use pre-trained FinBERT directly - it's already trained on financial sentiment
+    # DO NOT load custom weights as they are undertrained
+    model = TFBertForSequenceClassification.from_pretrained("ProsusAI/finbert", num_labels=3)
     tokenizer = BertTokenizer.from_pretrained("ProsusAI/finbert")
-    model.eval()
     return model, tokenizer
 
 model, tokenizer = load_model()
@@ -438,11 +437,9 @@ label_map = {0: "Positive", 1: "Negative", 2: "Neutral"}
 
 # ==================== HELPER FUNCTIONS ====================
 def predict_sentiment(text):
-    inputs = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="pt")
-    
-    with torch.no_grad():
-        outputs = model(**inputs)
-        probs = torch.nn.functional.softmax(outputs.logits, dim=-1).numpy()[0]
+    encodings = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="tf")
+    logits = model(encodings.data)[0]
+    probs = tf.nn.softmax(logits, axis=-1).numpy()[0]
     
     # Get probabilities for each class
     positive_prob = probs[0]  # index 0 = positive

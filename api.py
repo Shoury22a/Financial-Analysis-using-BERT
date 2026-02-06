@@ -9,8 +9,8 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-import torch
-from transformers import BertForSequenceClassification, BertTokenizer
+import tensorflow as tf
+from transformers import TFBertForSequenceClassification, BertTokenizer
 import numpy as np
 import yfinance as yf
 from datetime import datetime, timedelta
@@ -34,12 +34,11 @@ app.add_middleware(
 )
 
 # ==================== MODEL LOADING ====================
-print("Loading FinBERT model (PyTorch)...")
-# PyTorch is much more memory efficient for inference on CPU
-model = BertForSequenceClassification.from_pretrained("ProsusAI/finbert")
+print("Loading FinBERT model...")
+model = TFBertForSequenceClassification.from_pretrained("ProsusAI/finbert", num_labels=3)
 tokenizer = BertTokenizer.from_pretrained("ProsusAI/finbert")
-model.eval() # Set to evaluation mode
-label_map = {0: "Positive", 1: "Negative", 2: "Neutral"}
+# Label mapping: 0=Negative, 1=Neutral, 2=Positive (matches training script)
+label_map = {0: "Negative", 1: "Neutral", 2: "Positive"}
 print("Model loaded successfully!")
 
 # ==================== GLOBAL STOCK DATABASE ====================
@@ -119,29 +118,24 @@ class StockAnalysisRequest(BaseModel):
 
 # ==================== HELPER FUNCTIONS ====================
 def predict_sentiment(text: str) -> tuple:
-    inputs = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="pt")
+    """
+    Predict sentiment using the FinBERT model.
+    Returns the sentiment label and probability distribution.
     
-    with torch.no_grad():
-        outputs = model(**inputs)
-        probs = torch.nn.functional.softmax(outputs.logits, dim=-1).numpy()[0]
+    Label mapping: 0=Negative, 1=Neutral, 2=Positive
+    """
+    encodings = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="tf")
+    logits = model(encodings.data)[0]
+    probs = tf.nn.softmax(logits, axis=-1).numpy()[0]
     
-    positive_prob = probs[0]
-    negative_prob = probs[1]
-    neutral_prob = probs[2]
+    # Extract probabilities for each class
+    negative_prob = probs[0]
+    neutral_prob = probs[1]
+    positive_prob = probs[2]
     
+    # Get prediction based on highest probability (argmax)
     max_idx = np.argmax(probs)
-    max_prob = probs[max_idx]
-    
-    if neutral_prob >= positive_prob and neutral_prob >= negative_prob:
-        sentiment = "Neutral"
-    elif positive_prob > 0.55 and positive_prob > negative_prob + 0.15:
-        sentiment = "Positive"
-    elif negative_prob > 0.55 and negative_prob > positive_prob + 0.15:
-        sentiment = "Negative"
-    elif max_prob < 0.45 or (abs(positive_prob - negative_prob) < 0.1 and neutral_prob > 0.2):
-        sentiment = "Neutral"
-    else:
-        sentiment = label_map[max_idx]
+    sentiment = label_map[max_idx]
     
     return sentiment, {
         "Positive": round(float(positive_prob), 4),
@@ -273,7 +267,7 @@ async def get_glossary():
         ]
     }
 
-# Run with: uvicorn api:app --host 0.0.0.0 --port 7860
+# Run with: uvicorn api:app --host 0.0.0.0 --port 8000
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
