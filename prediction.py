@@ -436,11 +436,13 @@ weights_path = os.path.join(model_save_dir, "bert_weights.h5")
 
 @st.cache_resource
 def load_model():
-    # Use pre-trained FinBERT directly - it's already trained on financial sentiment
-    # DO NOT load custom weights as they are undertrained
-    # Switch to PyTorch (native for this model) to avoid TensorFlow errors on HF Spaces
-    model = BertForSequenceClassification.from_pretrained("ProsusAI/finbert", num_labels=3)
-    tokenizer = BertTokenizer.from_pretrained("ProsusAI/finbert")
+    # PATH TO FINE-TUNED MODEL (Prioritize Local)
+    model_path = "financial_sentiment_model"
+    if not os.path.exists(model_path):
+        model_path = "ProsusAI/finbert" # Fallback
+        
+    model = BertForSequenceClassification.from_pretrained(model_path, num_labels=3)
+    tokenizer = BertTokenizer.from_pretrained(model_path)
     return model, tokenizer
 
 model, tokenizer = load_model()
@@ -483,31 +485,9 @@ def predict_sentiment(text):
     negative_prob = probs[1]  # index 1 = negative
     neutral_prob = probs[2]   # index 2 = neutral
     
-    # Smart neutral detection logic:
-    # 1. If positive is clearly highest (>55% and significantly more than negative), return Positive
-    # 2. If negative is clearly highest (>55% and significantly more than positive), return Negative
-    # 3. If neutral has highest raw probability, return Neutral
-    # 4. If no class is confident and probabilities are close together, return Neutral
-    # 5. Otherwise return highest probability
-    
-    max_idx = np.argmax(probs)
-    max_prob = probs[max_idx]
-    
-    # Check if neutral has highest probability
-    if neutral_prob >= positive_prob and neutral_prob >= negative_prob:
-        sentiment = "Neutral"
-    # Clear positive signal
-    elif positive_prob > 0.55 and positive_prob > negative_prob + 0.15:
-        sentiment = "Positive"
-    # Clear negative signal
-    elif negative_prob > 0.55 and negative_prob > positive_prob + 0.15:
-        sentiment = "Negative"
-    # If all probabilities are close (no clear winner), it's neutral
-    elif max_prob < 0.45 or (abs(positive_prob - negative_prob) < 0.1 and neutral_prob > 0.2):
-        sentiment = "Neutral"
-    # Default to highest probability
-    else:
-        sentiment = label_map[max_idx]
+    # PURE AI MODEL PREDICTION (No Hardcoding)
+    # The model has been fine-tuned to handle these cases natively.
+    sentiment = label_map[np.argmax(probs)]
     
     return sentiment, {"Positive": round(float(positive_prob), 4), "Negative": round(float(negative_prob), 4), "Neutral": round(float(neutral_prob), 4)}
 
