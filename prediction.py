@@ -436,6 +436,21 @@ model, tokenizer = load_model()
 label_map = {0: "Positive", 1: "Negative", 2: "Neutral"}
 
 # ==================== HELPER FUNCTIONS ====================
+import requests
+
+# Set up a robust session for yfinance to bypass cloud blocking
+@st.cache_resource
+def get_yf_session():
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Origin': 'https://finance.yahoo.com',
+        'Referer': 'https://finance.yahoo.com/'
+    })
+    return session
+
 def predict_sentiment(text):
     encodings = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="tf")
     logits = model(encodings.data)[0]
@@ -500,11 +515,30 @@ def search_companies(query):
 
 def get_stock_data(ticker, period="1mo"):
     try:
-        stock = yf.Ticker(ticker)
+        session = get_yf_session()
+        stock = yf.Ticker(ticker, session=session)
+        
+        # Try fetching history first (more likely to succeed than info)
         hist = stock.history(period=period)
-        info = stock.info
-        return hist, info
+        
+        # If history exists, we have a valid stock
+        if hist is not None and not hist.empty:
+            # Try fetching info, but don't fail if it's blocked
+            info = {}
+            try:
+                info = stock.info
+            except Exception as info_error:
+                print(f"DEBUG: Info fetch failed for {ticker}: {info_error}")
+                # Create minimal info from our database if available
+                if ticker in GLOBAL_STOCKS:
+                    name, region, sector = GLOBAL_STOCKS[ticker]
+                    info = {'longName': name, 'sector': sector, 'currency': 'INR' if '.NS' in ticker else 'USD'}
+            
+            return hist, info
+        
+        return None, None
     except Exception as e:
+        print(f"DEBUG: Stock data fetch failed for {ticker}: {e}")
         return None, None
 
 def calculate_technical_indicators(df):
