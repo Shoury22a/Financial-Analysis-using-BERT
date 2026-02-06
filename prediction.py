@@ -442,12 +442,9 @@ import requests
 @st.cache_resource
 def get_yf_session():
     session = requests.Session()
+    # Using a common browser User-Agent that is less likely to be flagged
     session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Origin': 'https://finance.yahoo.com',
-        'Referer': 'https://finance.yahoo.com/'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
     })
     return session
 
@@ -514,31 +511,46 @@ def search_companies(query):
     return matches[:15]
 
 def get_stock_data(ticker, period="1mo"):
+    """Fetch stock data with multi-strategy fallback to handle environment restrictions"""
     try:
         session = get_yf_session()
-        stock = yf.Ticker(ticker, session=session)
         
-        # Try fetching history first (more likely to succeed than info)
+        # Strategy 1: yf.Ticker (Standard)
+        stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
         
-        # If history exists, we have a valid stock
+        # Strategy 2: yf.download (Fallback for cloud IPs)
+        if hist is None or hist.empty:
+            print(f"DEBUG: Ticker search failed for {ticker}, trying download fallback...")
+            hist = yf.download(ticker, period=period, progress=False, session=session, auto_adjust=True)
+        
+        # If we have data, try to get info
         if hist is not None and not hist.empty:
-            # Try fetching info, but don't fail if it's blocked
             info = {}
             try:
+                # Ticker info is most sensitive to blocking
                 info = stock.info
-            except Exception as info_error:
-                print(f"DEBUG: Info fetch failed for {ticker}: {info_error}")
-                # Create minimal info from our database if available
+            except:
+                pass
+            
+            # Fill minimal info if blocked or missing
+            if not info or 'longName' not in info:
                 if ticker in GLOBAL_STOCKS:
                     name, region, sector = GLOBAL_STOCKS[ticker]
-                    info = {'longName': name, 'sector': sector, 'currency': 'INR' if '.NS' in ticker else 'USD'}
+                    info = {
+                        'longName': name, 
+                        'sector': sector, 
+                        'currency': 'INR' if '.NS' in ticker else 'USD',
+                        'symbol': ticker
+                    }
+                else:
+                    info = {'longName': ticker, 'symbol': ticker, 'currency': 'USD'}
             
             return hist, info
         
         return None, None
     except Exception as e:
-        print(f"DEBUG: Stock data fetch failed for {ticker}: {e}")
+        print(f"DEBUG: All fetch strategies failed for {ticker}: {e}")
         return None, None
 
 def calculate_technical_indicators(df):
