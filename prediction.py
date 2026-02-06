@@ -854,10 +854,6 @@ with tab1:
                         <h2 class="{sent_class}" style="font-size: 3rem; margin-top: 1rem;">{sentiment.upper()}</h2>
                     </div>
                     """, unsafe_allow_html=True)
-                    
-                    # --- ENHANCEMENT 3: EXPORT BUTTON ---
-                    report_text = f"FINSIGHT AI ANALYSIS\n--------------------\nHeadline: {news_input[:50]}...\nPrediction: {sentiment}\nConfidence: {details[sentiment]*100:.1f}%\n\nBreakdown:\nPositive: {details['Positive']:.4f}\nNegative: {details['Negative']:.4f}\nNeutral:  {details['Neutral']:.4f}"
-                    st.download_button(label="📥 Download Brief", data=report_text, file_name="sentiment_analysis.txt", mime="text/plain", use_container_width=True)
                 
                 with col2:
                     st.markdown('<div class="glass-card" style="height: 100%;">', unsafe_allow_html=True)
@@ -1010,6 +1006,11 @@ with tab2:
                             <p style="color: #6b7280; font-size: 0.95rem; line-height: 1.6;">{reason}</p>
                         </div>
                         """, unsafe_allow_html=True)
+
+                        # --- ENHANCEMENT 3: EXPORT BUTTON (Moved Here) ---
+                        stock_report = f"FINSIGHT STOCK ANALYSIS\n-----------------------\nTicker: {selected_ticker}\nPrice: {currency} {current_price:.2f} ({change_pct:+.2f}%)\n\nPrediction: {recommendation}\nConfidence: {score}%\nReasoning: {reason}\n\nTechnical Indicators:\n- RSI: {hist['RSI'].iloc[-1]:.2f}\n- SMA_20: {hist['SMA_20'].iloc[-1]:.2f}"
+                        st.download_button(label="📥 Download Stock Brief", data=stock_report, file_name=f"{selected_ticker}_analysis.txt", mime="text/plain", use_container_width=True)
+
                     else:
                         st.error(f"Could not fetch reliable data for {selected_ticker}. Our team is investigating.")
         else:
@@ -1018,7 +1019,7 @@ with tab2:
 with tab3:
     st.markdown("""
     <div class="glass-card">
-        <h3 style="color: white;">� Trading Academy</h3>
+        <h3 style="color: white;">📚 Trading Academy</h3>
         <p style="color: #a0aec0;">Master the markets with our interactive financial glossary.</p>
     </div>
     """, unsafe_allow_html=True)
