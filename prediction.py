@@ -19,163 +19,135 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==================== CUSTOM CSS ====================
+# ==================== CUSTOM CSS & JS ====================
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;600;800&display=swap');
     
-    .stApp {
-        background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%);
-        font-family: 'Inter', sans-serif;
+    :root {
+        --primary: #00d4aa;
+        --secondary: #00a8e8;
+        --accent: #7c3aed;
+        --bg-dark: #07071c;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.08);
     }
-    
+
+    .stApp {
+        background: radial-gradient(circle at 50% 50%, #111135 0%, #07071c 100%);
+        font-family: 'Inter', sans-serif;
+        color: #e2e8f0;
+    }
+
+    /* Cursor Glow Effect */
+    #cursor-glow {
+        position: fixed;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(0, 212, 170, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition: transform 0.1s ease-out;
+    }
+
+    /* Market Ticker */
+    .ticker-container {
+        width: 100%;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 10px 0;
+        border-bottom: 1px solid var(--glass-border);
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .ticker-content {
+        display: inline-block;
+        animation: ticker 40s linear infinite;
+        padding-left: 100%;
+    }
+
+    @keyframes ticker {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
+    }
+
+    .ticker-item {
+        display: inline-block;
+        margin-right: 40px;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .price-up { color: #00d4aa; }
+    .price-down { color: #ff6b6b; }
+
+    /* Titles */
     .main-title {
-        font-size: 3.5rem;
-        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        font-size: 4.5rem;
+        font-weight: 800;
         background: linear-gradient(135deg, #00d4aa 0%, #00a8e8 50%, #7c3aed 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        background-clip: text;
         text-align: center;
-        margin-bottom: 0.5rem;
-        animation: glow 2s ease-in-out infinite alternate;
+        margin-top: 2rem;
+        letter-spacing: -2px;
     }
-    
-    @keyframes glow {
-        from { filter: drop-shadow(0 0 20px rgba(0, 212, 170, 0.3)); }
-        to { filter: drop-shadow(0 0 30px rgba(0, 168, 232, 0.5)); }
-    }
-    
-    .subtitle {
-        text-align: center;
-        color: #a0aec0;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-    }
-    
+
     .glass-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 1.5rem;
-        margin: 1rem 0;
-        transition: all 0.3s ease;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .glass-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(0, 212, 170, 0.2);
-        border-color: rgba(0, 212, 170, 0.3);
+        border-color: rgba(0, 212, 170, 0.4);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 20px 50px rgba(0, 212, 170, 0.1);
+        transform: translateY(-8px);
     }
-    
-    .positive { color: #00d4aa !important; }
-    .negative { color: #ff6b6b !important; }
-    .neutral { color: #ffd93d !important; }
-    
-    .recommendation {
-        display: inline-block;
-        padding: 0.8rem 2rem;
-        border-radius: 50px;
+
+    /* Metric Cards */
+    .metric-value {
+        font-size: 2rem;
         font-weight: 700;
-        font-size: 1.2rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        animation: pulse 2s infinite;
+        font-family: 'Outfit', sans-serif;
     }
-    
-    .recommendation.buy {
-        background: linear-gradient(135deg, #00d4aa 0%, #00a86b 100%);
-        color: #0f0f23;
-    }
-    
-    .recommendation.hold {
-        background: linear-gradient(135deg, #ffd93d 0%, #ff9500 100%);
-        color: #0f0f23;
-    }
-    
-    .recommendation.sell {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
-        color: white;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-    }
-    
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1a3e 0%, #0f0f23 100%);
-    }
-    
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(0, 212, 170, 0.3) !important;
-        border-radius: 10px !important;
-        color: white !important;
-    }
-    
-    .stButton > button {
-        background: linear-gradient(135deg, #00d4aa 0%, #00a8e8 100%);
-        color: #0f0f23;
-        border: none;
-        border-radius: 10px;
-        padding: 0.6rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(0, 212, 170, 0.4);
-    }
-    
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    /* Hide Streamlit components */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
-    .divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(0, 212, 170, 0.5), transparent);
-        margin: 2rem 0;
-    }
-    
-    .term-card {
-        background: rgba(0, 212, 170, 0.08);
-        border-left: 4px solid #00d4aa;
-        padding: 1rem 1.5rem;
-        margin: 0.8rem 0;
-        border-radius: 0 10px 10px 0;
-    }
-    
-    .term-title {
-        color: #00d4aa;
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 0.3rem;
-    }
-    
-    .term-desc {
-        color: #a0aec0;
-        font-size: 0.95rem;
-        line-height: 1.5;
-    }
-    
-    .region-badge {
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        margin: 0.2rem;
-    }
-    
-    .region-us { background: rgba(0, 168, 232, 0.2); color: #00a8e8; }
-    .region-india { background: rgba(255, 153, 0, 0.2); color: #ff9900; }
-    .region-asia { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
-    .region-europe { background: rgba(124, 58, 237, 0.2); color: #7c3aed; }
+
+    /* Animations */
+    .fade-in { animation: fadeIn 1.2s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
+
+<div id="cursor-glow"></div>
+
+<script>
+    const glow = document.getElementById('cursor-glow');
+    document.addEventListener('mousemove', (e) => {
+        glow.style.left = e.clientX + 'px';
+        glow.style.top = e.clientY + 'px';
+    });
+</script>
 """, unsafe_allow_html=True)
 
 # ==================== GLOBAL STOCK DATABASE ====================
@@ -683,48 +655,111 @@ def get_region_badge(region):
                       'Thailand': 'region-asia', 'Indonesia': 'region-asia', 'Europe': 'region-europe'}
     return region_classes.get(region, 'region-us')
 
-# ==================== SIDEBAR ====================
-with st.sidebar:
+# ==================== MAIN DASHBOARD UI ====================
+
+# 1. Market Ticker Section
+@st.cache_data(ttl=300)
+def get_ticker_data():
+    symbols = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'RELIANCE.NS', 'TCS.NS', '005930.KS', 'BTC-USD']
+    ticker_html = '<div class="ticker-container"><div class="ticker-content">'
+    for sym in symbols:
+        try:
+            quote = finnhub_client.quote(sym)
+            price = quote.get('c', 0)
+            change = quote.get('dp', 0)
+            symbol_clean = sym.split('.')[0]
+            color_class = "price-up" if change >= 0 else "price-down"
+            arrow = "▲" if change >= 0 else "▼"
+            ticker_html += f'<span class="ticker-item">{symbol_clean}: <span class="{color_class}">{price:,.2f} ({arrow}{abs(change):.2f}%)</span></span>'
+        except:
+            continue
+    ticker_html += '</div></div>'
+    return ticker_html
+
+st.markdown(get_ticker_data(), unsafe_allow_html=True)
+
+# 2. Hero Section
+st.markdown('<h1 class="main-title face-in">FINSIGHT AI</h1>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle fade-in">Professional Grade Intelligence for Smart Investors</p>', unsafe_allow_html=True)
+
+# 3. Features Grid
+col1, col2, col3 = st.columns(3)
+with col1:
     st.markdown("""
-    <div style="text-align: center; padding: 1rem 0;">
-        <span style="font-size: 3rem;">🔮</span>
-        <h2 style="color: #00d4aa; margin: 0.5rem 0;">FINSIGHT AI</h2>
-        <p style="color: #a0aec0; font-size: 0.9rem;">AI-Powered Financial Intelligence</p>
+    <div class="glass-card fade-in">
+        <h3 style="color: var(--primary)">🔮 AI Sentiment</h3>
+        <p style="color: #a0aec0">Real-time analysis of market news and psychology using deep learning BERT transformers.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col2:
+    st.markdown("""
+    <div class="glass-card fade-in">
+        <h3 style="color: var(--secondary)">📊 Market Pulse</h3>
+        <p style="color: #a0aec0">Live data streaming for over 500+ global stocks across major world exchanges.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col3:
+    st.markdown("""
+    <div class="glass-card fade-in">
+        <h3 style="color: var(--accent)">🛡️ Smart Entry</h3>
+        <p style="color: #a0aec0">Advanced technical indicators (RSI, SMA) to suggest precision BUY/SELL entry points.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+# 4. Main Activity Engine
+tab1, tab2, tab3 = st.tabs(["🚀 Market Prediction", "📑 Company Research", "📚 Trading Academy"])
+
+with tab1:
+    st.markdown("""
+    <div class="glass-card">
+        <h3 style="color: white;">📝 AI Sentiment Engine</h3>
+        <p style="color: #a0aec0;">Paste a financial news headline or a statement to analyze investor sentiment using FinBERT.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    news_input = st.text_area("Financial Content", placeholder="Enter financial news here...", height=150, key="news_tab1")
     
-    page = st.radio(
-        "Navigation",
-        ["📊 Stock Analysis", "📰 Sentiment Analysis", "📚 Learn Trading", "ℹ️ About"],
-        label_visibility="collapsed"
-    )
+    if st.button("🔮 Run AI Analysis", use_container_width=True, key="btn_tab1"):
+        if news_input:
+            with st.spinner("Model analyzing sentiment..."):
+                sentiment, details = predict_sentiment(news_input)
+                
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    sent_class = sentiment.lower()
+                    st.markdown(f"""
+                    <div class="glass-card" style="text-align: center;">
+                        <h4 style="color: #a0aec0;">PREDICTED SENTIMENT</h4>
+                        <h2 class="{sent_class}" style="font-size: 3rem; margin-top: 1rem;">{sentiment.upper()}</h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown('<div class="glass-card" style="height: 100%;">', unsafe_allow_html=True)
+                    st.write("Confidence Metrics")
+                    for label, prob in details.items():
+                        st.progress(prob, text=f"{label}: {prob*100:.1f}%")
+                    st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.warning("Please enter some text to analyze.")
 
-# ==================== MAIN CONTENT ====================
-st.markdown('<h1 class="main-title">FINSIGHT AI</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">AI-Powered Stock Analysis & Financial Sentiment Intelligence</p>', unsafe_allow_html=True)
-
-if page == "📊 Stock Analysis":
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    # Show coverage info
+with tab2:
     st.markdown(f"""
     <div class="glass-card">
-        <h3 style="color: white; margin-bottom: 1rem;">🔍 Search Company</h3>
+        <h3 style="color: white; margin-bottom: 1rem;">🔍 Global Market Research</h3>
         <p style="color: #a0aec0;">Search from <strong style="color: #00d4aa;">{len(GLOBAL_STOCKS)}+ stocks</strong> across global markets</p>
         <div style="margin-top: 0.8rem;">
-            <span class="region-badge region-us">🇺🇸 US</span>
-            <span class="region-badge region-india">🇮🇳 India</span>
-            <span class="region-badge region-asia">🇨🇳 China</span>
-            <span class="region-badge region-asia">🇯🇵 Japan</span>
-            <span class="region-badge region-asia">🇰🇷 Korea</span>
-            <span class="region-badge region-europe">🇪🇺 Europe</span>
+            <span class="region-badge region-us">US Market</span>
+            <span class="region-badge region-india">NSE India</span>
+            <span class="region-badge region-asia">Asia-Pacific</span>
+            <span class="region-badge region-europe">EU Markets</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    search_query = st.text_input("Search", placeholder="Type company name (e.g., Apple, Reliance, Tata, Samsung...)", label_visibility="collapsed")
+    search_query = st.text_input("Enter Company Name or Ticker", placeholder="e.g., Apple, Reliance, Tata, Samsung...", key="search_tab2")
     
     if search_query:
         matches = search_companies(search_query)
@@ -737,7 +772,7 @@ if page == "📊 Stock Analysis":
             """, unsafe_allow_html=True)
             
             options = [f"{ticker} - {name} ({region})" for ticker, name, region, sector in matches]
-            selected = st.selectbox("Select a stock:", options, label_visibility="collapsed")
+            selected = st.selectbox("Select a stock:", options, key="select_stock_tab2")
             
             if selected:
                 selected_ticker = selected.split(" - ")[0]
@@ -745,14 +780,14 @@ if page == "📊 Stock Analysis":
                 col1, col2 = st.columns([3, 1])
                 with col2:
                     period_options = {"1 Day": "1d", "5 Days": "5d", "1 Month": "1mo", "3 Months": "3mo", "6 Months": "6mo", "1 Year": "1y", "5 Years": "5y"}
-                    period_label = st.selectbox("Period", list(period_options.keys()), index=2)
+                    period_label = st.selectbox("Market Period", list(period_options.keys()), index=2, key="period_tab2")
                     period = period_options[period_label]
                 
-                if st.button("📈 Analyze Stock", use_container_width=True):
-                    with st.spinner(f"Fetching data for {selected_ticker}..."):
+                if st.button("📈 Analyze & Predict", use_container_width=True, key="btn_tab2"):
+                    with st.spinner(f"Professional data fetch for {selected_ticker}..."):
                         hist, info = get_stock_data(selected_ticker, period)
                     
-                    if hist is not None and len(hist) > 0:
+                    if hist is not None and not hist.empty:
                         hist = calculate_technical_indicators(hist)
                         recommendation, score, reason = get_recommendation(hist, info)
                         
@@ -766,13 +801,10 @@ if page == "📊 Stock Analysis":
                         change_class = 'positive' if change >= 0 else 'negative'
                         change_arrow = '▲' if change >= 0 else '▼'
                         
-                        sector = info.get('sector', 'N/A') if info else 'N/A'
-                        industry = info.get('industry', 'N/A') if info else 'N/A'
-                        
                         st.markdown(f"""
                         <div class="glass-card">
                             <h2 style="color: white; margin-bottom: 0.5rem;">{company_name}</h2>
-                            <p style="color: #a0aec0; margin-bottom: 1rem;">{sector} | {industry}</p>
+                            <p style="color: #a0aec0; margin-bottom: 1rem;">{info.get('sector', 'N/A')} | {info.get('industry', 'N/A')}</p>
                             <div style="display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;">
                                 <span style="font-size: 2.5rem; font-weight: 700; color: white;">{currency} {current_price:.2f}</span>
                                 <span class="{change_class}" style="font-size: 1.2rem; font-weight: 600;">
@@ -782,149 +814,75 @@ if page == "📊 Stock Analysis":
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Metrics
-                        col1, col2, col3, col4, col5 = st.columns(5)
-                        with col1:
+                        # Metrics in glass cards
+                        m_col1, m_col2, m_col3 = st.columns(3)
+                        with m_col1:
                             mc = info.get('marketCap', 0) if info else 0
                             mc_str = f"${mc/1e9:.1f}B" if mc else "N/A"
-                            st.metric("Market Cap", mc_str)
-                        with col2:
+                            st.markdown(f'<div class="glass-card" style="text-align: center;"><p style="color: #a0aec0;">Market Cap</p><p class="metric-value">{mc_str}</p></div>', unsafe_allow_html=True)
+                        with m_col2:
                             vol = info.get('volume', 0) if info else 0
                             vol_str = f"{vol/1e6:.1f}M" if vol else "N/A"
-                            st.metric("Volume", vol_str)
-                        with col3:
-                            h52 = info.get('fiftyTwoWeekHigh', 0) if info else 0
-                            st.metric("52W High", f"${h52:.2f}" if h52 else "N/A")
-                        with col4:
-                            l52 = info.get('fiftyTwoWeekLow', 0) if info else 0
-                            st.metric("52W Low", f"${l52:.2f}" if l52 else "N/A")
-                        with col5:
+                            st.markdown(f'<div class="glass-card" style="text-align: center;"><p style="color: #a0aec0;">Volume</p><p class="metric-value">{vol_str}</p></div>', unsafe_allow_html=True)
+                        with m_col3:
                             pe = info.get('trailingPE', 0) if info else 0
-                            st.metric("P/E Ratio", f"{pe:.2f}" if pe else "N/A")
+                            pe_str = f"{pe:.2f}" if pe else "N/A"
+                            st.markdown(f'<div class="glass-card" style="text-align: center;"><p style="color: #a0aec0;">P/E Ratio</p><p class="metric-value">{pe_str}</p></div>', unsafe_allow_html=True)
                         
-                        st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+                        # Plotly Chart
                         fig = create_stock_chart(hist, selected_ticker)
                         st.plotly_chart(fig, use_container_width=True)
                         
-                        st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+                        # AI Prediction Card
                         rec_class = recommendation.lower()
                         st.markdown(f"""
-                        <div class="glass-card" style="text-align: center;">
-                            <h3 style="color: #a0aec0; margin-bottom: 1rem;">🤖 AI RECOMMENDATION</h3>
+                        <div class="glass-card" style="text-align: center; border: 2px solid rgba(0, 212, 170, 0.3);">
+                            <h3 style="color: #a0aec0; margin-bottom: 1rem;">🤖 THE FINSIGHT PREDICTION</h3>
                             <div class="recommendation {rec_class}">{recommendation}</div>
-                            <p style="color: #a0aec0; margin-top: 1rem;">Confidence: <strong style="color: #00d4aa;">{score}%</strong></p>
-                            <p style="color: #6b7280; font-size: 0.85rem;">{reason}</p>
+                            <p style="color: #a0aec0; margin-top: 1rem;">AI Confidence Level: <strong style="color: #00d4aa;">{score}%</strong></p>
+                            <p style="color: #6b7280; font-size: 0.95rem; line-height: 1.6;">{reason}</p>
                         </div>
                         """, unsafe_allow_html=True)
                     else:
-                        st.error(f"Could not fetch data for {selected_ticker}. Please try another stock.")
+                        st.error(f"Could not fetch reliable data for {selected_ticker}. Our team is investigating.")
         else:
-            st.warning(f"No stocks found for '{search_query}'. Try a different term or enter the exact ticker symbol.")
+            st.info("Start by entering a company name above.")
 
-elif page == "📰 Sentiment Analysis":
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
+with tab3:
     st.markdown("""
     <div class="glass-card">
-        <h3 style="color: white;">📝 Financial News Sentiment Analyzer</h3>
-        <p style="color: #a0aec0;">Analyze financial news headlines using our FinBERT AI model.</p>
+        <h3 style="color: white;">� Trading Academy</h3>
+        <p style="color: #a0aec0;">Master the markets with our interactive financial glossary.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    user_input = st.text_area("Enter financial news:", placeholder="e.g., Apple reports record quarterly revenue...", height=150, label_visibility="collapsed")
-    
-    if st.button("🔍 Analyze Sentiment", use_container_width=True):
-        if user_input.strip():
-            with st.spinner("Analyzing..."):
-                sentiment, probs = predict_sentiment(user_input)
-            
-            colors = {"Positive": "#00d4aa", "Neutral": "#ffd93d", "Negative": "#ff6b6b"}
-            emoji = {"Positive": "📈", "Neutral": "➡️", "Negative": "📉"}
-            
-            st.markdown(f"""
-            <div class="glass-card" style="text-align: center;">
-                <span style="font-size: 4rem;">{emoji[sentiment]}</span>
-                <h2 style="color: {colors[sentiment]}; margin: 1rem 0;">{sentiment}</h2>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            col1, col2, col3 = st.columns(3)
-            for col, (label, color) in zip([col1, col2, col3], [("Positive", "#00d4aa"), ("Neutral", "#ffd93d"), ("Negative", "#ff6b6b")]):
-                with col:
-                    st.markdown(f"""
-                    <div class="glass-card" style="text-align: center;">
-                        <p style="color: #a0aec0;">{label}</p>
-                        <p style="font-size: 1.8rem; font-weight: 700; color: {color};">{probs[label]:.1%}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-        else:
-            st.warning("Please enter some text.")
-
-elif page == "📚 Learn Trading":
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="glass-card">
-        <h3 style="color: white;">📚 Trading Glossary for Beginners</h3>
-        <p style="color: #a0aec0;">Essential trading terms every investor should know. Perfect for newcomers!</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Search filter
-    search_term = st.text_input("🔍 Search terms...", placeholder="Type to filter terms...", label_visibility="collapsed")
+    search_term = st.text_input("Filter Glossary", placeholder="Search terms (e.g., Bull, Bear, P/E...)", key="glossary_search")
     
     filtered_terms = {k: v for k, v in TRADING_GLOSSARY.items() if not search_term or search_term.lower() in k.lower() or search_term.lower() in v.lower()}
     
-    st.markdown(f"<p style='color: #a0aec0; margin: 1rem 0;'>Showing {len(filtered_terms)} of {len(TRADING_GLOSSARY)} terms</p>", unsafe_allow_html=True)
-    
-    # Display terms in columns
+    # Display terms in grid
     terms_list = list(filtered_terms.items())
-    col1, col2 = st.columns(2)
+    g_col1, g_col2 = st.columns(2)
     
     for i, (term, definition) in enumerate(terms_list):
-        col = col1 if i % 2 == 0 else col2
+        col = g_col1 if i % 2 == 0 else g_col2
         with col:
             st.markdown(f"""
             <div class="term-card">
                 <div class="term-title">{term}</div>
-                <div class="term-desc">{definition}</div>
+                <div class="term-desc" style="color: #a0aec0;">{definition}</div>
             </div>
             """, unsafe_allow_html=True)
 
-else:  # About
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="glass-card">
-        <h3 style="color: white;">About FINSIGHT AI</h3>
-        <p style="color: #a0aec0; line-height: 1.8;">
-            FINSIGHT AI is a cutting-edge financial intelligence platform combining real-time market data with AI-powered analysis.
-        </p>
-    </div>
-    
-    <div class="glass-card">
-        <h4 style="color: #00d4aa;">Features</h4>
-        <ul style="color: #a0aec0; line-height: 2;">
-            <li><strong>{len(GLOBAL_STOCKS)}+ Global Stocks</strong> - US, India, China, Japan, Korea, Europe</li>
-            <li><strong>Company Search</strong> - Find any stock by name or ticker</li>
-            <li><strong>Interactive Charts</strong> - Candlestick charts with technical indicators</li>
-            <li><strong>AI Recommendations</strong> - Buy/Hold/Sell based on technical analysis</li>
-            <li><strong>Sentiment Analysis</strong> - FinBERT-powered news analysis</li>
-            <li><strong>Trading Glossary</strong> - Learn essential trading terms</li>
-        </ul>
-    </div>
-    
+# Footer
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: #4a5568;">© 2026 FINSIGHT AI | Powered by FinBERT Transformers & Professional Grade APIs</p>', unsafe_allow_html=True)
+
+st.markdown(f"""
     <div class="glass-card">
         <h4 style="color: #ffd93d;">Disclaimer</h4>
         <p style="color: #a0aec0; font-size: 0.9rem;">
             This tool is for educational purposes only. Always consult a financial advisor. Past performance doesn't guarantee future results.
         </p>
     </div>
-    """, unsafe_allow_html=True)
-
-# Footer
-st.markdown("""
-<div style="text-align: center; margin-top: 3rem; padding: 1rem; color: #6b7280; font-size: 0.85rem;">
-    <p>Built with Streamlit & FinBERT | FINSIGHT AI</p>
-</div>
 """, unsafe_allow_html=True)
