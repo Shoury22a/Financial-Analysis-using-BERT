@@ -726,8 +726,86 @@ def get_region_badge(region):
 # 1. Market Ticker Section (Interactive)
 
 # 2. Hero Section
-st.markdown('<h1 class="main-title face-in">FINSIGHT AI</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle fade-in">Professional Grade Intelligence for Smart Investors</p>', unsafe_allow_html=True)
+st.markdown("""
+<div class="hero-container fade-in">
+    <div class="logo-wrapper">
+        <div class="logo-eye">
+            <div class="logo-pupil"></div>
+        </div>
+    </div>
+    <h1 class="main-title">FINSIGHT AI</h1>
+    <p class="subtitle">Professional Grade Intelligence for Smart Investors</p>
+</div>
+
+<style>
+    .hero-container {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    /* Pure CSS Logo: Cybereye */
+    .logo-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+    
+    .logo-eye {
+        width: 60px;
+        height: 60px;
+        border: 3px solid #00d4aa;
+        border-radius: 50%; /* Circle */
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 20px rgba(0, 212, 170, 0.4);
+        animation: pulseLogo 3s infinite ease-in-out;
+    }
+    
+    .logo-eye::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px dashed rgba(0, 212, 170, 0.5);
+        animation: spinLogo 10s linear infinite;
+    }
+    
+    .logo-pupil {
+        width: 12px;
+        height: 12px;
+        background: #00d4aa;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #00d4aa;
+    }
+    
+    @keyframes spinLogo { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes pulseLogo { 0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 212, 170, 0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(0, 212, 170, 0.6); } }
+
+    .main-title {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        font-size: 3.5rem;
+        background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        letter-spacing: -1px;
+        margin: 0;
+    }
+    
+    .subtitle {
+        font-family: 'Inter', sans-serif;
+        color: #94a3b8;
+        font-size: 1.1rem;
+        margin-top: 5px;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # 3. Features Grid
 col1, col2, col3 = st.columns(3)
