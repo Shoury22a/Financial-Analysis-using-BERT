@@ -33,5 +33,5 @@ RUN python -c "from transformers import TFBertForSequenceClassification, BertTok
 # Expose port 7860 (HF Spaces default)
 EXPOSE 7860
 
-# Run the application
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "7860"]
+# Run Streamlit (full UI dashboard)
+CMD ["streamlit", "run", "prediction.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.enableCORS=false", "--server.enableXsrfProtection=false"]
