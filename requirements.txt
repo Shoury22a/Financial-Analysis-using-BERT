@@ -3,7 +3,6 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.5.3
 torch
-tf-keras
 transformers==4.36.0
 numpy==1.26.2
 yfinance>=0.2.40
