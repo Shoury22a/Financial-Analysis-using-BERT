@@ -788,9 +788,10 @@ st.markdown("""
         font-family: 'Outfit', sans-serif;
         font-weight: 800;
         font-size: 3.5rem;
-        color: #ffffff;
-        text-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
-        text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        color: #ffffff !important;
+        background: none !important;
+        -webkit-text-fill-color: #ffffff !important;
+        text-shadow: 0 0 10px rgba(0, 212, 170, 0.8), 0 0 20px rgba(0, 212, 170, 0.4);
         letter-spacing: -1px;
         margin: 0;
     }
