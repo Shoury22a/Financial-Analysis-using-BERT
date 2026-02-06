@@ -5,9 +5,11 @@ import numpy as np
 import os
 import yfinance as yf
 from yahooquery import Ticker
+import finnhub
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import pandas as pd
+import time
 
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
@@ -449,6 +451,14 @@ def get_yf_session():
     })
     return session
 
+# Initialize Finnhub Client
+@st.cache_resource
+def get_finnhub_client():
+    # Hardcoded key as per user request to "make it work"
+    return finnhub.Client(api_key="d62s9vhr01qnpu82gau0d62s9vhr01qnpu82gaug")
+
+finnhub_client = get_finnhub_client()
+
 def predict_sentiment(text):
     encodings = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="tf")
     logits = model(encodings.data)[0]
@@ -513,83 +523,88 @@ def search_companies(query):
 
 def get_stock_data(ticker, period="1mo"):
     """
-    ULTRA-ROBUST FETCHING:
-    Strategy 1: YahooQuery (Uses internal Yahoo API, best for cloud)
-    Strategy 2: yFinance History (Standard fallback)
-    Strategy 3: yFinance Download (Final fallback)
+    ULTRA-ROBUST FETCHING (Professional Grade):
+    Strategy 1: Finnhub API (Direct API connection, won't be blocked)
+    Strategy 2: YahooQuery (Internal API)
+    Strategy 3: yFinance History
+    Strategy 4: yFinance Download
     """
     try:
-        session = get_yf_session()
-        
-        # --- STRATEGY 1: yahooquery (Most resilient) ---
+        # --- STRATEGY 1: Finnhub API (Fast & Reliable) ---
         try:
-            yq_ticker = Ticker(ticker, session=session, retry=3, timeout=10)
-            # yahooquery history returns a dataframe for one ticker or a dict for multiple
-            yq_hist = yq_ticker.history(period=period)
+            # Map period to days for Finnhub
+            period_map = {"1d": 1, "5d": 5, "1mo": 30, "3mo": 90, "6mo": 180, "1y": 365, "5y": 1825}
+            days = period_map.get(period, 30)
+            end_ts = int(time.time())
+            start_ts = end_ts - (days * 24 * 60 * 60)
             
-            if isinstance(yq_hist, pd.DataFrame) and not yq_hist.empty:
-                # Fix index if it's multi-index (common in yahooquery)
-                if isinstance(yq_hist.index, pd.MultiIndex):
-                    yq_hist = yq_hist.xs(ticker)
+            # Use 'D' for daily candles
+            res = finnhub_client.stock_candles(ticker, 'D', start_ts, end_ts)
+            
+            if res.get('s') == 'ok':
+                df = pd.DataFrame({
+                    'Open': res['o'],
+                    'High': res['h'],
+                    'Low': res['l'],
+                    'Close': res['c'],
+                    'Volume': res['v'],
+                }, index=pd.to_datetime(res['t'], unit='s'))
                 
-                # Fetch info using yahooquery (internal API)
+                # Get basic info from our DB or Finnhub profile
                 info = {}
                 try:
-                    summary = yq_ticker.summary_profile.get(ticker, {})
-                    price = yq_ticker.price.get(ticker, {})
-                    quote = yq_ticker.quote_type.get(ticker, {})
-                    
-                    info = {
-                        'longName': price.get('longName') or quote.get('longName') or ticker,
-                        'sector': summary.get('sector') or 'N/A',
-                        'industry': summary.get('industry') or 'N/A',
-                        'currency': price.get('currency') or 'USD',
-                        'marketCap': price.get('marketCap'),
-                        'fiftyTwoWeekHigh': price.get('fiftyTwoWeekHigh'),
-                        'fiftyTwoWeekLow': price.get('fiftyTwoWeekLow'),
-                        'previousClose': price.get('regularMarketPreviousClose')
-                    }
+                    profile = finnhub_client.company_profile2(symbol=ticker)
+                    if profile:
+                        info = {
+                            'longName': profile.get('name', ticker),
+                            'sector': profile.get('finnhubIndustry', 'N/A'),
+                            'currency': profile.get('currency', 'USD'),
+                            'marketCap': profile.get('marketCapitalization'),
+                        }
                 except:
                     pass
                 
-                # Double check naming for India/International stocks
-                if not info.get('longName') or info['longName'] == ticker:
+                # Fill fallback if info fetch failed
+                if not info or info.get('longName') == ticker:
                     if ticker in GLOBAL_STOCKS:
                         info['longName'] = GLOBAL_STOCKS[ticker][0]
                 
-                return yq_hist, info
+                return df, info
         except Exception as e:
-            print(f"DEBUG: YahooQuery failed for {ticker}: {e}")
+            print(f"DEBUG: Finnhub failed for {ticker}: {e}")
 
-        # --- STRATEGY 2: yfinance (Fallback) ---
+        # --- FALLBACK STRATEGIES (Yahoo based) ---
+        session = get_yf_session()
+        
+        # --- STRATEGY 2: yahooquery ---
+        try:
+            yq_ticker = Ticker(ticker, session=session, retry=2)
+            yq_hist = yq_ticker.history(period=period)
+            if isinstance(yq_hist, pd.DataFrame) and not yq_hist.empty:
+                if isinstance(yq_hist.index, pd.MultiIndex):
+                    yq_hist = yq_hist.xs(ticker)
+                
+                info = {}
+                try:
+                    price = yq_ticker.price.get(ticker, {})
+                    info = { 'longName': price.get('longName', ticker), 'currency': price.get('currency', 'USD') }
+                except: pass
+                return yq_hist, info
+        except: pass
+
+        # --- STRATEGY 3 & 4: yfinance ---
         stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
-        
         if hist is not None and not hist.empty:
-            info = {}
-            try:
-                info = stock.info
-            except:
-                pass
-            
-            if not info or 'longName' not in info:
-                if ticker in GLOBAL_STOCKS:
-                    name, region, sector = GLOBAL_STOCKS[ticker]
-                    info = {'longName': name, 'sector': sector, 'currency': 'INR' if '.NS' in ticker else 'USD'}
-            
-            return hist, info
+            return hist, {'longName': ticker}
 
-        # --- STRATEGY 3: yf.download (Last resort) ---
-        hist = yf.download(ticker, period=period, progress=False, session=session, auto_adjust=True)
+        hist = yf.download(ticker, period=period, progress=False, session=session)
         if hist is not None and not hist.empty:
-            info = {'longName': ticker, 'currency': 'USD'}
-            if ticker in GLOBAL_STOCKS:
-                info['longName'] = GLOBAL_STOCKS[ticker][0]
-            return hist, info
+            return hist, {'longName': ticker}
 
         return None, None
     except Exception as e:
-        print(f"DEBUG: All stock fetching strategies failed for {ticker}: {e}")
+        print(f"DEBUG: Critical failure for {ticker}: {e}")
         return None, None
 
 def calculate_technical_indicators(df):
