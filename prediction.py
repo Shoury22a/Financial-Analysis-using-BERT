@@ -39,33 +39,41 @@ st.markdown("""
         color: #e2e8f0;
     }
 
-    /* Cursor Glow Effect */
-    #cursor-glow {
+    /* Cursor Particle Effect */
+    .particle {
         position: fixed;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, rgba(0, 212, 170, 0.05) 0%, transparent 70%);
+        width: 6px;
+        height: 6px;
+        background: #00d4aa;
         border-radius: 50%;
         pointer-events: none;
         z-index: 9999;
+        opacity: 0.8;
         transform: translate(-50%, -50%);
-        transition: transform 0.1s ease-out;
+        transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        box-shadow: 0 0 10px #00d4aa;
     }
 
     /* Market Ticker */
     .ticker-container {
         width: 100%;
         overflow: hidden;
-        background: rgba(0, 0, 0, 0.4);
-        padding: 10px 0;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 12px 0;
         border-bottom: 1px solid var(--glass-border);
         white-space: nowrap;
         position: relative;
+        z-index: 100;
+    }
+    
+    .ticker-container:hover .ticker-content {
+        animation-play-state: paused; 
+        /* Pauses on hover so user can click */
     }
 
     .ticker-content {
         display: inline-block;
-        animation: ticker 40s linear infinite;
+        animation: ticker 60s linear infinite; /* Slower for readability */
         padding-left: 100%;
     }
 
@@ -76,10 +84,17 @@ st.markdown("""
 
     .ticker-item {
         display: inline-block;
-        margin-right: 40px;
+        margin-right: 50px;
         font-family: 'Outfit', sans-serif;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .ticker-item:hover {
+        transform: scale(1.1);
+        text-shadow: 0 0 15px rgba(0, 212, 170, 0.5);
     }
 
     .price-up { color: #00d4aa; }
@@ -139,13 +154,35 @@ st.markdown("""
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
-<div id="cursor-glow"></div>
-
 <script>
-    const glow = document.getElementById('cursor-glow');
-    document.addEventListener('mousemove', (e) => {
-        glow.style.left = e.clientX + 'px';
-        glow.style.top = e.clientY + 'px';
+    // Professional Particle Trail Effect
+    document.addEventListener('mousemove', function(e) {
+        if (Math.random() < 0.3) { // Create particles intermittently
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // Set position
+            particle.style.left = e.clientX + 'px';
+            particle.style.top = e.clientY + 'px';
+            
+            // Random size variation
+            const size = Math.random() * 4 + 2;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            
+            document.body.appendChild(particle);
+            
+            // Animate out
+            setTimeout(() => {
+                particle.style.transform = `translate(-50%, -50%) translate(${Math.random()*40-20}px, ${Math.random()*40-20}px)`;
+                particle.style.opacity = '0';
+            }, 10);
+            
+            // Clean up
+            setTimeout(() => {
+                particle.remove();
+            }, 800);
+        }
     });
 </script>
 """, unsafe_allow_html=True)
@@ -657,22 +694,50 @@ def get_region_badge(region):
 
 # ==================== MAIN DASHBOARD UI ====================
 
-# 1. Market Ticker Section
+# 1. Market Ticker Section (Interactive)
 @st.cache_data(ttl=300)
 def get_ticker_data():
-    symbols = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'RELIANCE.NS', 'TCS.NS', '005930.KS', 'BTC-USD']
-    ticker_html = '<div class="ticker-container"><div class="ticker-content">'
+    # Expanded Global List (Indices, Tech, Crypto, Asia, EU)
+    symbols = [
+        'SPY', 'QQQ', 'BTC-USD', 'ETH-USD', # Global/Crypto
+        'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'GOOGL', 'AMD', # US Tech
+        'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', # India
+        '005930.KS', '7203.T', '9988.HK', # Asia
+        'SAP', 'ASML', 'LVMUY' # Europe
+    ]
+    
+    ticker_html = """
+    <div class="ticker-container">
+        <div class="ticker-content">
+    """
+    
     for sym in symbols:
         try:
             quote = finnhub_client.quote(sym)
             price = quote.get('c', 0)
             change = quote.get('dp', 0)
-            symbol_clean = sym.split('.')[0]
+            
+            if price == 0: continue
+            
+            # Clean Symbol Name
+            display_name = sym.split('.')[0]
+            if "USD" in sym: display_name = sym # Keep Crypto full
+            
             color_class = "price-up" if change >= 0 else "price-down"
             arrow = "▲" if change >= 0 else "▼"
-            ticker_html += f'<span class="ticker-item">{symbol_clean}: <span class="{color_class}">{price:,.2f} ({arrow}{abs(change):.2f}%)</span></span>'
+            
+            # Interactive Link -> Reloads app with ?ticker=SYMBOL
+            ticker_html += f'''
+            <a href="/?ticker={sym}" target="_self" style="text-decoration: none;">
+                <span class="ticker-item hover-effect">
+                    <span style="color: #e2e8f0;">{display_name}</span>: 
+                    <span class="{color_class}">{price:,.2f} ({arrow}{abs(change):.2f}%)</span>
+                </span>
+            </a>
+            '''
         except:
             continue
+            
     ticker_html += '</div></div>'
     return ticker_html
 
@@ -707,6 +772,16 @@ with col3:
     """, unsafe_allow_html=True)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+# Check for Ticker Click (Query Params)
+# New Streamlit 1.30+ uses st.query_params, older uses experimental. Supporting both safely.
+try:
+    query_params = st.query_params
+except:
+    query_params = st.experimental_get_query_params()
+
+selected_from_ticker = query_params.get("ticker", None)
+if isinstance(selected_from_ticker, list): selected_from_ticker = selected_from_ticker[0] # Handle list return in legacy
 
 # 4. Main Activity Engine
 tab1, tab2, tab3 = st.tabs(["🚀 Market Prediction", "📑 Company Research", "📚 Trading Academy"])
@@ -759,31 +834,54 @@ with tab2:
     </div>
     """, unsafe_allow_html=True)
     
-    search_query = st.text_input("Enter Company Name or Ticker", placeholder="e.g., Apple, Reliance, Tata, Samsung...", key="search_tab2")
+    search_query = st.text_input("Enter Company Name or Ticker", placeholder="e.g., Apple, Reliance, Tata, Samsung...", key="search_tab2", value=selected_from_ticker if selected_from_ticker else "")
     
-    if search_query:
-        matches = search_companies(search_query)
+    # Auto-trigger if clicked from ticker
+    if selected_from_ticker:
+        st.info(f"⚡ FAST-TRACK: Analyzed {selected_from_ticker} from Market Ticker.")
+    
+    if search_query or selected_from_ticker:
+        # If came from ticker, bypass search_companies and go straight to analysis if possible
+        # But search_companies logic is good for safety.
+        # If ticker is exact match, we can skip search results UI if we want, but let's keep it safe.
         
+        # Override query if ticker selected
+        query_to_use = selected_from_ticker if selected_from_ticker else search_query
+        
+        matches = search_companies(query_to_use)
+        
+        # If exact match or ticker provided
         if matches:
-            st.markdown(f"""
-            <div class="glass-card">
-                <h4 style="color: #00d4aa;">Found {len(matches)} matching stocks:</h4>
-            </div>
-            """, unsafe_allow_html=True)
+            # If clicked from ticker, auto-select the first match
+            if selected_from_ticker:
+                 # Find match that matches ticker exactly to avoid "Apple" matching "Apple Hospitality"
+                 exact_match = next((x for x in matches if x[0] == selected_from_ticker), matches[0])
+                 selected_ticker = exact_match[0]
+                 company_name = exact_match[1]
+                 region = exact_match[2]
+            else:
+                 st.markdown(f"""
+                <div class="glass-card">
+                    <h4 style="color: #00d4aa;">Found {len(matches)} matching stocks:</h4>
+                </div>
+                """, unsafe_allow_html=True)
+                 options = [f"{ticker} - {name} ({region})" for ticker, name, region, sector in matches]
+                 selected = st.selectbox("Select a stock:", options, key="select_stock_tab2")
+                 if selected:
+                     selected_ticker = selected.split(" - ")[0]
             
-            options = [f"{ticker} - {name} ({region})" for ticker, name, region, sector in matches]
-            selected = st.selectbox("Select a stock:", options, key="select_stock_tab2")
-            
-            if selected:
-                selected_ticker = selected.split(" - ")[0]
-                
+            if 'selected_ticker' in locals():
                 col1, col2 = st.columns([3, 1])
                 with col2:
                     period_options = {"1 Day": "1d", "5 Days": "5d", "1 Month": "1mo", "3 Months": "3mo", "6 Months": "6mo", "1 Year": "1y", "5 Years": "5y"}
                     period_label = st.selectbox("Market Period", list(period_options.keys()), index=2, key="period_tab2")
                     period = period_options[period_label]
                 
-                if st.button("📈 Analyze & Predict", use_container_width=True, key="btn_tab2"):
+                # Auto-click button if from ticker
+                should_run = st.button("📈 Analyze & Predict", use_container_width=True, key="btn_tab2")
+                if selected_from_ticker: should_run = True # Auto-run
+                
+                if should_run:
                     with st.spinner(f"Professional data fetch for {selected_ticker}..."):
                         hist, info = get_stock_data(selected_ticker, period)
                     
