@@ -21,21 +21,17 @@ WORKDIR $HOME/app
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Copy training data and scripts
-COPY --chown=user financial_news_augmented.csv .
-COPY --chown=user create_dataset.py .
-COPY --chown=user fine_tune.py .
-COPY --chown=user prediction.py .
+# Copy application code
 COPY --chown=user api.py .
-COPY --chown=user verify_model.py .
+COPY --chown=user prediction.py .
 
-# --- BUILD-TIME TRAINING (The "Smart" Docker Build) ---
-# Instead of downloading the generic model, we RETRAIN it right here in the builder.
-# This ensures the deployed app has the 150+ sample "Smart Brain" without Git LFS.
-RUN python fine_tune.py
+# Pre-download FinBERT model (PyTorch version)
+RUN python -c "from transformers import BertForSequenceClassification, BertTokenizer; \
+    BertForSequenceClassification.from_pretrained('ProsusAI/finbert'); \
+    BertTokenizer.from_pretrained('ProsusAI/finbert')"
 
-# Expose port 7860 (Standard)
+# Expose port 7860 (HF Spaces default)
 EXPOSE 7860
 
-# Run Streamlit
+# Run Streamlit (full UI dashboard)
 CMD ["streamlit", "run", "prediction.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.enableCORS=false", "--server.enableXsrfProtection=false"]
