@@ -25,9 +25,9 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 COPY --chown=user api.py .
 COPY --chown=user prediction.py .
 
-# Pre-download FinBERT model
-RUN python -c "from transformers import TFBertForSequenceClassification, BertTokenizer; \
-    TFBertForSequenceClassification.from_pretrained('ProsusAI/finbert'); \
+# Pre-download FinBERT model (PyTorch version)
+RUN python -c "from transformers import BertForSequenceClassification, BertTokenizer; \
+    BertForSequenceClassification.from_pretrained('ProsusAI/finbert'); \
     BertTokenizer.from_pretrained('ProsusAI/finbert')"
 
 # Expose port 7860 (HF Spaces default)
