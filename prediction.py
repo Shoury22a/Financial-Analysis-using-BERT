@@ -1007,8 +1007,13 @@ with tab2:
                         </div>
                         """, unsafe_allow_html=True)
 
+
                         # --- ENHANCEMENT 3: EXPORT BUTTON (Moved Here) ---
-                        stock_report = f"FINSIGHT STOCK ANALYSIS\n-----------------------\nTicker: {selected_ticker}\nPrice: {currency} {current_price:.2f} ({change_pct:+.2f}%)\n\nPrediction: {recommendation}\nConfidence: {score}%\nReasoning: {reason}\n\nTechnical Indicators:\n- RSI: {hist['RSI'].iloc[-1]:.2f}\n- SMA_20: {hist['SMA_20'].iloc[-1]:.2f}"
+                        # Safe access for indicators
+                        rsi_val = hist['RSI'].iloc[-1] if 'RSI' in hist.columns else 0.0
+                        sma_val = hist['SMA20'].iloc[-1] if 'SMA20' in hist.columns else 0.0
+                        
+                        stock_report = f"FINSIGHT STOCK ANALYSIS\n-----------------------\nTicker: {selected_ticker}\nPrice: {currency} {current_price:.2f} ({change_pct:+.2f}%)\n\nPrediction: {recommendation}\nConfidence: {score}%\nReasoning: {reason}\n\nTechnical Indicators:\n- RSI: {rsi_val:.2f}\n- SMA20: {sma_val:.2f}"
                         st.download_button(label="📥 Download Stock Brief", data=stock_report, file_name=f"{selected_ticker}_analysis.txt", mime="text/plain", use_container_width=True)
 
                     else:
