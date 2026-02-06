@@ -841,6 +841,10 @@ with tab1:
             with st.spinner("Model analyzing sentiment..."):
                 sentiment, details = predict_sentiment(news_input)
                 
+                # --- ENHANCEMENT 1: CELEBRATION EFFECT ---
+                if sentiment == "Positive" and details["Positive"] > 0.90:
+                    st.balloons()
+
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     sent_class = sentiment.lower()
@@ -850,12 +854,37 @@ with tab1:
                         <h2 class="{sent_class}" style="font-size: 3rem; margin-top: 1rem;">{sentiment.upper()}</h2>
                     </div>
                     """, unsafe_allow_html=True)
+                    
+                    # --- ENHANCEMENT 3: EXPORT BUTTON ---
+                    report_text = f"FINSIGHT AI ANALYSIS\n--------------------\nHeadline: {news_input[:50]}...\nPrediction: {sentiment}\nConfidence: {details[sentiment]*100:.1f}%\n\nBreakdown:\nPositive: {details['Positive']:.4f}\nNegative: {details['Negative']:.4f}\nNeutral:  {details['Neutral']:.4f}"
+                    st.download_button(label="📥 Download Brief", data=report_text, file_name="sentiment_analysis.txt", mime="text/plain", use_container_width=True)
                 
                 with col2:
                     st.markdown('<div class="glass-card" style="height: 100%;">', unsafe_allow_html=True)
-                    st.write("Confidence Metrics")
-                    for label, prob in details.items():
-                        st.progress(prob, text=f"{label}: {prob*100:.1f}%")
+                    st.write("Confidence DNA")
+                    
+                    # --- ENHANCEMENT 2: COLOR-CODED BARS (Custom HTML) ---
+                    # Standard st.progress doesn't support dynamic colors easily, so we use custom HTML
+                    
+                    def custom_bar(label, value, color):
+                        return f"""
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                <span style="font-size: 0.8rem; color: #e2e8f0;">{label}</span>
+                                <span style="font-size: 0.8rem; color: {color}; font-weight: bold;">{value*100:.1f}%</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background-color: #2d3748; border-radius: 4px;">
+                                <div style="width: {value*100}%; height: 100%; background-color: {color}; border-radius: 4px; box-shadow: 0 0 8px {color}; transition: width 0.5s ease;"></div>
+                            </div>
+                        </div>
+                        """
+                    
+                    bar_html = ""
+                    bar_html += custom_bar("Positive", details["Positive"], "#10b981") # Green
+                    bar_html += custom_bar("Negative", details["Negative"], "#ef4444") # Red
+                    bar_html += custom_bar("Neutral", details["Neutral"], "#3b82f6")  # Blue
+                    
+                    st.markdown(bar_html, unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("Please enter some text to analyze.")
