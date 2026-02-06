@@ -1,6 +1,7 @@
 import streamlit as st
-import tensorflow as tf
-from transformers import TFBertForSequenceClassification, BertTokenizer
+import torch
+import torch.nn.functional as F
+from transformers import BertForSequenceClassification, BertTokenizer
 import numpy as np
 import os
 import yfinance as yf
@@ -437,7 +438,8 @@ weights_path = os.path.join(model_save_dir, "bert_weights.h5")
 def load_model():
     # Use pre-trained FinBERT directly - it's already trained on financial sentiment
     # DO NOT load custom weights as they are undertrained
-    model = TFBertForSequenceClassification.from_pretrained("ProsusAI/finbert", num_labels=3)
+    # Switch to PyTorch (native for this model) to avoid TensorFlow errors on HF Spaces
+    model = BertForSequenceClassification.from_pretrained("ProsusAI/finbert", num_labels=3)
     tokenizer = BertTokenizer.from_pretrained("ProsusAI/finbert")
     return model, tokenizer
 
@@ -469,9 +471,12 @@ def get_finnhub_client():
 finnhub_client = get_finnhub_client()
 
 def predict_sentiment(text):
-    encodings = tokenizer(text, truncation=True, padding=True, max_length=128, return_tensors="tf")
-    logits = model(encodings.data)[0]
-    probs = tf.nn.softmax(logits, axis=-1).numpy()[0]
+    # PyTorch inference logic
+    inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=128)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        logits = outputs.logits
+        probs = F.softmax(logits, dim=-1).numpy()[0]
     
     # Get probabilities for each class
     positive_prob = probs[0]  # index 0 = positive
