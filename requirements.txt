@@ -3,7 +3,7 @@ fastapi==0.109.0
 torch
 uvicorn[standard]==0.27.0
 pydantic==2.5.3
-transformers==4.36.0
+transformers==4.33.0
 numpy==1.26.2
 yfinance>=0.2.40
 yahooquery>=2.3.7

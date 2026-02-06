@@ -700,28 +700,6 @@ def get_region_badge(region):
 # ==================== MAIN DASHBOARD UI ====================
 
 # 1. Market Ticker Section (Interactive)
-@st.cache_data(ttl=300)
-def get_ticker_data():
-    symbols = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'RELIANCE.NS', 'TCS.NS', '005930.KS', 'BTC-USD']
-    ticker_html = '<div class="ticker-container"><div class="ticker-content">'
-    for sym in symbols:
-        try:
-            quote = finnhub_client.quote(sym)
-            price = quote.get('c', 0)
-            change = quote.get('dp', 0)
-            
-            if price == 0: continue
-            
-            symbol_clean = sym.split('.')[0]
-            color_class = "price-up" if change >= 0 else "price-down"
-            arrow = "▲" if change >= 0 else "▼"
-            ticker_html += f'<span class="ticker-item">{symbol_clean}: <span class="{color_class}">{price:,.2f} ({arrow}{abs(change):.2f}%)</span></span>'
-        except:
-            continue
-    ticker_html += '</div></div>'
-    return ticker_html
-
-st.markdown(get_ticker_data(), unsafe_allow_html=True)
 
 # 2. Hero Section
 st.markdown('<h1 class="main-title face-in">FINSIGHT AI</h1>', unsafe_allow_html=True)
