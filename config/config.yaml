@@ -1,0 +1,59 @@
+model:
+  name: "ProsusAI/finbert"
+  num_labels: 3
+  max_length: 128
+  # Label mapping will be loaded from trained model's config.json
+  # This ensures consistency between training and inference
+  
+training:
+  output_dir: "./models/checkpoints"
+  num_epochs: 5
+  batch_size: 16
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  test_size: 0.15
+  random_seed: 42
+  early_stopping_patience: 2
+  
+  # Progressive unfreezing
+  freeze_embeddings: true
+  freeze_bottom_layers: 8
+  unfreeze_at_epoch: 3
+  
+  # Class balancing
+  use_class_weights: true
+  
+data:
+  dataset_dir: "data"
+  output_dataset: "data/financial_news_preprocessed.csv"
+  min_samples_per_class: 1000
+  
+  # Data augmentation
+  augmentation_enabled: true
+  augmentation_per_sample: 3
+  augmentation_methods:
+    - contextual_word_embeddings
+    - back_translation
+    - entity_replacement
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  title: "FINSIGHT AI API"
+  version: "1.0.0"
+  cors_origins: "*"
+  
+ui:
+  theme:
+    primary_color: "#00d4aa"
+    secondary_color: "#00a8e8"
+    accent_color: "#7c3aed"
+    bg_dark: "#07071c"
+    glass_bg: "rgba(255, 255, 255, 0.03)"
+    glass_border: "rgba(255, 255, 255, 0.08)"
+
+logging:
+  level: "INFO"
+  format: "json"
+  log_file: "logs/finsight.log"

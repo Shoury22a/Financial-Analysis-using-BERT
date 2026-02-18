@@ -44,7 +44,8 @@ test_sentences = [
     ("Sales volumes improved even as pricing pressure persisted.", "Positive"), # Sales up usually wins
 ]
 
-label_map = {0: "Positive", 1: "Negative", 2: "Neutral"}
+# Fixed label mapping to match training
+label_map = {0: "Negative", 1: "Neutral", 2: "Positive"}
 
 print("\n--- Testing Current Mapping ---")
 for text, expected in test_sentences:

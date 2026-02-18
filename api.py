@@ -35,10 +35,28 @@ app.add_middleware(
 
 # ==================== MODEL LOADING ====================
 print("Loading FinBERT model...")
-model = TFBertForSequenceClassification.from_pretrained("ProsusAI/finbert", num_labels=3)
-tokenizer = BertTokenizer.from_pretrained("ProsusAI/finbert")
-# Label mapping: 0=Negative, 1=Neutral, 2=Positive (matches training script)
-label_map = {0: "Negative", 1: "Neutral", 2: "Positive"}
+
+# Load fine-tuned model (falls back to base if not found)
+MODEL_PATH = "financial_sentiment_model"
+if not os.path.exists(MODEL_PATH):
+    MODEL_PATH = "ProsusAI/finbert"
+    print(f"  -> Fine-tuned model not found, using base: {MODEL_PATH}")
+
+model = TFBertForSequenceClassification.from_pretrained(MODEL_PATH, num_labels=3)
+tokenizer = BertTokenizer.from_pretrained(MODEL_PATH)
+
+# Read label mapping from model's config.json (NO HARDCODING)
+config_path = os.path.join(MODEL_PATH, "config.json")
+if os.path.exists(config_path):
+    with open(config_path, "r") as f:
+        _config = json.load(f)
+    _id2label = _config.get("id2label", {})
+    label_map = {int(k): v.capitalize() for k, v in _id2label.items()}
+else:
+    # Default ProsusAI/finbert native mapping
+    label_map = {0: "Positive", 1: "Negative", 2: "Neutral"}
+
+print(f"  -> Label mapping: {label_map}")
 print("Model loaded successfully!")
 
 # ==================== GLOBAL STOCK DATABASE ====================

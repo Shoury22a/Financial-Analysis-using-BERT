@@ -1,22 +1,39 @@
-# Byte-compiled / optimized
+# Add .env file to gitignore (contains API keys)
+.env
+*.env
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Virtual environments
-venv/
+*.so
+.Python
 env/
-.env
+venv/
+ENV/
+
+# Model files
+financial_sentiment_model/
+models/
+results/
+*.h5
+*.pkl
+*.safetensors
+
+# Data
+data/
+*.csv
+*.json
+
+# Logs
+logs/
+*.log
 
 # IDE
 .vscode/
 .idea/
-
-# Model weights (downloaded at runtime)
-financial_sentiment_model/
-
-# Logs
-*.log
+*.swp
+*.swo
 
 # OS
 .DS_Store
@@ -24,10 +41,3 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
-
-# Temp
-*.tmp
-*.temp
-
-# Gemini brain folder
-.gemini/

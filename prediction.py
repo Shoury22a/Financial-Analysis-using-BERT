@@ -188,205 +188,12 @@ st.markdown("""
 </script>
 """, unsafe_allow_html=True)
 
-# ==================== GLOBAL STOCK DATABASE ====================
-GLOBAL_STOCKS = {
-    # ===== US STOCKS (S&P 500 Major) =====
-    'AAPL': ('Apple Inc.', 'US', 'Technology'),
-    'MSFT': ('Microsoft Corporation', 'US', 'Technology'),
-    'GOOGL': ('Alphabet Inc. (Google)', 'US', 'Technology'),
-    'GOOG': ('Alphabet Inc. Class C', 'US', 'Technology'),
-    'AMZN': ('Amazon.com Inc.', 'US', 'Consumer'),
-    'NVDA': ('NVIDIA Corporation', 'US', 'Technology'),
-    'META': ('Meta Platforms Inc.', 'US', 'Technology'),
-    'TSLA': ('Tesla Inc.', 'US', 'Automotive'),
-    'BRK-B': ('Berkshire Hathaway', 'US', 'Finance'),
-    'UNH': ('UnitedHealth Group', 'US', 'Healthcare'),
-    'JNJ': ('Johnson & Johnson', 'US', 'Healthcare'),
-    'JPM': ('JPMorgan Chase & Co.', 'US', 'Finance'),
-    'V': ('Visa Inc.', 'US', 'Finance'),
-    'PG': ('Procter & Gamble Co.', 'US', 'Consumer'),
-    'MA': ('Mastercard Inc.', 'US', 'Finance'),
-    'HD': ('The Home Depot Inc.', 'US', 'Retail'),
-    'CVX': ('Chevron Corporation', 'US', 'Energy'),
-    'MRK': ('Merck & Co. Inc.', 'US', 'Healthcare'),
-    'ABBV': ('AbbVie Inc.', 'US', 'Healthcare'),
-    'LLY': ('Eli Lilly and Company', 'US', 'Healthcare'),
-    'PEP': ('PepsiCo Inc.', 'US', 'Consumer'),
-    'KO': ('The Coca-Cola Company', 'US', 'Consumer'),
-    'COST': ('Costco Wholesale Corp.', 'US', 'Retail'),
-    'WMT': ('Walmart Inc.', 'US', 'Retail'),
-    'BAC': ('Bank of America Corp.', 'US', 'Finance'),
-    'DIS': ('The Walt Disney Company', 'US', 'Entertainment'),
-    'NFLX': ('Netflix Inc.', 'US', 'Entertainment'),
-    'ADBE': ('Adobe Inc.', 'US', 'Technology'),
-    'CRM': ('Salesforce Inc.', 'US', 'Technology'),
-    'AMD': ('Advanced Micro Devices', 'US', 'Technology'),
-    'INTC': ('Intel Corporation', 'US', 'Technology'),
-    'CSCO': ('Cisco Systems Inc.', 'US', 'Technology'),
-    'ORCL': ('Oracle Corporation', 'US', 'Technology'),
-    'QCOM': ('Qualcomm Inc.', 'US', 'Technology'),
-    'IBM': ('IBM Corporation', 'US', 'Technology'),
-    'NKE': ('Nike Inc.', 'US', 'Consumer'),
-    'MCD': ('McDonalds Corporation', 'US', 'Consumer'),
-    'SBUX': ('Starbucks Corporation', 'US', 'Consumer'),
-    'BA': ('Boeing Company', 'US', 'Aerospace'),
-    'GE': ('General Electric Co.', 'US', 'Industrial'),
-    'CAT': ('Caterpillar Inc.', 'US', 'Industrial'),
-    'GS': ('Goldman Sachs Group', 'US', 'Finance'),
-    'MS': ('Morgan Stanley', 'US', 'Finance'),
-    'AXP': ('American Express Co.', 'US', 'Finance'),
-    'PYPL': ('PayPal Holdings Inc.', 'US', 'Finance'),
-    'UBER': ('Uber Technologies', 'US', 'Technology'),
-    'ABNB': ('Airbnb Inc.', 'US', 'Travel'),
-    'ZM': ('Zoom Video Communications', 'US', 'Technology'),
-    'SQ': ('Block Inc. (Square)', 'US', 'Finance'),
-    'SHOP': ('Shopify Inc.', 'US', 'Technology'),
-    'SNAP': ('Snap Inc.', 'US', 'Technology'),
-    'ROKU': ('Roku Inc.', 'US', 'Technology'),
-    'SPOT': ('Spotify Technology', 'US', 'Entertainment'),
-    'TWTR': ('Twitter/X Corp', 'US', 'Technology'),
-    'COIN': ('Coinbase Global', 'US', 'Finance'),
-    'PLTR': ('Palantir Technologies', 'US', 'Technology'),
-    'RIVN': ('Rivian Automotive', 'US', 'Automotive'),
-    'LCID': ('Lucid Group', 'US', 'Automotive'),
-    'F': ('Ford Motor Company', 'US', 'Automotive'),
-    'GM': ('General Motors', 'US', 'Automotive'),
-    
-    # ===== INDIA STOCKS (NIFTY 50 + Popular) =====
-    'RELIANCE.NS': ('Reliance Industries Ltd', 'India', 'Energy'),
-    'TCS.NS': ('Tata Consultancy Services', 'India', 'Technology'),
-    'HDFCBANK.NS': ('HDFC Bank Limited', 'India', 'Finance'),
-    'INFY.NS': ('Infosys Limited', 'India', 'Technology'),
-    'ICICIBANK.NS': ('ICICI Bank Limited', 'India', 'Finance'),
-    'HINDUNILVR.NS': ('Hindustan Unilever', 'India', 'Consumer'),
-    'SBIN.NS': ('State Bank of India', 'India', 'Finance'),
-    'BHARTIARTL.NS': ('Bharti Airtel Limited', 'India', 'Telecom'),
-    'ITC.NS': ('ITC Limited', 'India', 'Consumer'),
-    'KOTAKBANK.NS': ('Kotak Mahindra Bank', 'India', 'Finance'),
-    'LT.NS': ('Larsen & Toubro', 'India', 'Industrial'),
-    'AXISBANK.NS': ('Axis Bank Limited', 'India', 'Finance'),
-    'ASIANPAINT.NS': ('Asian Paints Limited', 'India', 'Consumer'),
-    'MARUTI.NS': ('Maruti Suzuki India', 'India', 'Automotive'),
-    'SUNPHARMA.NS': ('Sun Pharmaceutical', 'India', 'Healthcare'),
-    'TITAN.NS': ('Titan Company Limited', 'India', 'Consumer'),
-    'BAJFINANCE.NS': ('Bajaj Finance Limited', 'India', 'Finance'),
-    'WIPRO.NS': ('Wipro Limited', 'India', 'Technology'),
-    'HCLTECH.NS': ('HCL Technologies', 'India', 'Technology'),
-    'TATAMOTORS.NS': ('Tata Motors Limited', 'India', 'Automotive'),
-    'TATASTEEL.NS': ('Tata Steel Limited', 'India', 'Industrial'),
-    'POWERGRID.NS': ('Power Grid Corporation', 'India', 'Energy'),
-    'NTPC.NS': ('NTPC Limited', 'India', 'Energy'),
-    'ONGC.NS': ('Oil & Natural Gas Corp', 'India', 'Energy'),
-    'COALINDIA.NS': ('Coal India Limited', 'India', 'Energy'),
-    'JSWSTEEL.NS': ('JSW Steel Limited', 'India', 'Industrial'),
-    'ADANIENT.NS': ('Adani Enterprises', 'India', 'Industrial'),
-    'ADANIPORTS.NS': ('Adani Ports & SEZ', 'India', 'Industrial'),
-    'TECHM.NS': ('Tech Mahindra Limited', 'India', 'Technology'),
-    'ULTRACEMCO.NS': ('UltraTech Cement', 'India', 'Industrial'),
-    'BAJAJFINSV.NS': ('Bajaj Finserv Limited', 'India', 'Finance'),
-    'NESTLEIND.NS': ('Nestle India Limited', 'India', 'Consumer'),
-    'DIVISLAB.NS': ('Divis Laboratories', 'India', 'Healthcare'),
-    'DRREDDY.NS': ('Dr. Reddys Laboratories', 'India', 'Healthcare'),
-    'CIPLA.NS': ('Cipla Limited', 'India', 'Healthcare'),
-    'EICHERMOT.NS': ('Eicher Motors Limited', 'India', 'Automotive'),
-    'HEROMOTOCO.NS': ('Hero MotoCorp Limited', 'India', 'Automotive'),
-    'BAJAJ-AUTO.NS': ('Bajaj Auto Limited', 'India', 'Automotive'),
-    'M&M.NS': ('Mahindra & Mahindra', 'India', 'Automotive'),
-    'BRITANNIA.NS': ('Britannia Industries', 'India', 'Consumer'),
-    'APOLLOHOSP.NS': ('Apollo Hospitals', 'India', 'Healthcare'),
-    'GRASIM.NS': ('Grasim Industries', 'India', 'Industrial'),
-    'INDUSINDBK.NS': ('IndusInd Bank Limited', 'India', 'Finance'),
-    'SBILIFE.NS': ('SBI Life Insurance', 'India', 'Finance'),
-    'HDFCLIFE.NS': ('HDFC Life Insurance', 'India', 'Finance'),
-    
-    # ===== CHINA STOCKS =====
-    'BABA': ('Alibaba Group Holdings', 'China', 'Technology'),
-    '9988.HK': ('Alibaba Group (HK)', 'China', 'Technology'),
-    'JD': ('JD.com Inc.', 'China', 'Technology'),
-    'PDD': ('PDD Holdings (Pinduoduo)', 'China', 'Technology'),
-    'BIDU': ('Baidu Inc.', 'China', 'Technology'),
-    'NIO': ('NIO Inc.', 'China', 'Automotive'),
-    'XPEV': ('XPeng Inc.', 'China', 'Automotive'),
-    'LI': ('Li Auto Inc.', 'China', 'Automotive'),
-    'BILI': ('Bilibili Inc.', 'China', 'Entertainment'),
-    '0700.HK': ('Tencent Holdings', 'China', 'Technology'),
-    '9618.HK': ('JD.com (HK)', 'China', 'Technology'),
-    '3690.HK': ('Meituan', 'China', 'Technology'),
-    '1810.HK': ('Xiaomi Corporation', 'China', 'Technology'),
-    '2318.HK': ('Ping An Insurance', 'China', 'Finance'),
-    '0941.HK': ('China Mobile', 'China', 'Telecom'),
-    '1398.HK': ('ICBC', 'China', 'Finance'),
-    '3988.HK': ('Bank of China', 'China', 'Finance'),
-    
-    # ===== JAPAN STOCKS =====
-    '7203.T': ('Toyota Motor Corp', 'Japan', 'Automotive'),
-    '6758.T': ('Sony Group Corporation', 'Japan', 'Technology'),
-    '9984.T': ('SoftBank Group', 'Japan', 'Technology'),
-    '6861.T': ('Keyence Corporation', 'Japan', 'Technology'),
-    '9432.T': ('NTT Corporation', 'Japan', 'Telecom'),
-    '8306.T': ('MUFG Bank', 'Japan', 'Finance'),
-    '7974.T': ('Nintendo Co Ltd', 'Japan', 'Entertainment'),
-    '6501.T': ('Hitachi Ltd', 'Japan', 'Industrial'),
-    '7267.T': ('Honda Motor Co', 'Japan', 'Automotive'),
-    '4502.T': ('Takeda Pharmaceutical', 'Japan', 'Healthcare'),
-    '6902.T': ('Denso Corporation', 'Japan', 'Automotive'),
-    '8035.T': ('Tokyo Electron', 'Japan', 'Technology'),
-    'TM': ('Toyota Motor (ADR)', 'Japan', 'Automotive'),
-    'SONY': ('Sony Group (ADR)', 'Japan', 'Technology'),
-    'HMC': ('Honda Motor (ADR)', 'Japan', 'Automotive'),
-    
-    # ===== SOUTH KOREA STOCKS =====
-    '005930.KS': ('Samsung Electronics', 'Korea', 'Technology'),
-    '000660.KS': ('SK Hynix', 'Korea', 'Technology'),
-    '035420.KS': ('Naver Corporation', 'Korea', 'Technology'),
-    '035720.KS': ('Kakao Corp', 'Korea', 'Technology'),
-    '051910.KS': ('LG Chem', 'Korea', 'Industrial'),
-    '006400.KS': ('Samsung SDI', 'Korea', 'Technology'),
-    '003550.KS': ('LG Corp', 'Korea', 'Industrial'),
-    '005380.KS': ('Hyundai Motor', 'Korea', 'Automotive'),
-    
-    # ===== TAIWAN STOCKS =====
-    'TSM': ('Taiwan Semiconductor (ADR)', 'Taiwan', 'Technology'),
-    '2330.TW': ('TSMC', 'Taiwan', 'Technology'),
-    '2317.TW': ('Hon Hai Precision (Foxconn)', 'Taiwan', 'Technology'),
-    '2454.TW': ('MediaTek Inc', 'Taiwan', 'Technology'),
-    
-    # ===== EUROPE STOCKS =====
-    'ASML': ('ASML Holding NV', 'Europe', 'Technology'),
-    'NVO': ('Novo Nordisk', 'Europe', 'Healthcare'),
-    'SAP': ('SAP SE', 'Europe', 'Technology'),
-    'TTE': ('TotalEnergies SE', 'Europe', 'Energy'),
-    'SHEL': ('Shell PLC', 'Europe', 'Energy'),
-    'AZN': ('AstraZeneca PLC', 'Europe', 'Healthcare'),
-    'HSBC': ('HSBC Holdings', 'Europe', 'Finance'),
-    'UL': ('Unilever PLC', 'Europe', 'Consumer'),
-    'BP': ('BP PLC', 'Europe', 'Energy'),
-    'GSK': ('GlaxoSmithKline', 'Europe', 'Healthcare'),
-    'RIO': ('Rio Tinto Group', 'Europe', 'Industrial'),
-    'BHP': ('BHP Group Limited', 'Europe', 'Industrial'),
-    'DEO': ('Diageo PLC', 'Europe', 'Consumer'),
-    'BTI': ('British American Tobacco', 'Europe', 'Consumer'),
-    'VOD': ('Vodafone Group', 'Europe', 'Telecom'),
-    'LVMUY': ('LVMH Moet Hennessy', 'Europe', 'Consumer'),
-    'OR.PA': ('LOreal SA', 'Europe', 'Consumer'),
-    'MC.PA': ('LVMH (Paris)', 'Europe', 'Consumer'),
-    'SAN.PA': ('Sanofi SA', 'Europe', 'Healthcare'),
-    'AIR.PA': ('Airbus SE', 'Europe', 'Aerospace'),
-    'SIEGY': ('Siemens AG', 'Europe', 'Industrial'),
-    'BAYN.DE': ('Bayer AG', 'Europe', 'Healthcare'),
-    'BMW.DE': ('BMW AG', 'Europe', 'Automotive'),
-    'VOW3.DE': ('Volkswagen AG', 'Europe', 'Automotive'),
-    'MBG.DE': ('Mercedes-Benz Group', 'Europe', 'Automotive'),
-    'SIE.DE': ('Siemens AG (DE)', 'Europe', 'Industrial'),
-    
-    # ===== OTHER ASIAN MARKETS =====
-    'GRAB': ('Grab Holdings', 'Singapore', 'Technology'),
-    'SE': ('Sea Limited', 'Singapore', 'Technology'),
-    'CPALL.BK': ('CP All PCL', 'Thailand', 'Retail'),
-    'PTT.BK': ('PTT PCL', 'Thailand', 'Energy'),
-    'TLKM.JK': ('Telkom Indonesia', 'Indonesia', 'Telecom'),
-    'BBCA.JK': ('Bank Central Asia', 'Indonesia', 'Finance'),
-}
+# ==================== NO HARDCODED STOCKS - 100% API-BASED ====================
+# All stock data fetched dynamically via:
+# - Finnhub API: symbol_lookup(), company_profile2(), quote()
+# - yfinance API: Ticker(), historical data, company info
+# - No hardcoded stock lists - search any stock worldwide!
+
 
 # ==================== TRADING GLOSSARY ====================
 TRADING_GLOSSARY = {
@@ -432,24 +239,32 @@ TRADING_GLOSSARY = {
 
 # ==================== MODEL LOADING ====================
 model_save_dir = "financial_sentiment_model"
-weights_path = os.path.join(model_save_dir, "bert_weights.h5")
 
 @st.cache_resource
 def load_model():
-    # PATH TO FINE-TUNED MODEL (Prioritize Local)
+    """Load fine-tuned model and read label mapping from config.json dynamically."""
     model_path = "financial_sentiment_model"
     if not os.path.exists(model_path):
-        model_path = "ProsusAI/finbert" # Fallback
-        
+        model_path = "ProsusAI/finbert"  # Fallback to base model
+
     model = BertForSequenceClassification.from_pretrained(model_path, num_labels=3)
     tokenizer = BertTokenizer.from_pretrained(model_path)
-    return model, tokenizer
 
-model, tokenizer = load_model()
+    # Read label mapping from model's config (NO HARDCODING)
+    config_path = os.path.join(model_path, "config.json")
+    if os.path.exists(config_path):
+        import json
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        id2label = config.get("id2label", {})
+        lmap = {int(k): v.capitalize() for k, v in id2label.items()}
+    else:
+        # Default ProsusAI/finbert native mapping
+        lmap = {0: "Positive", 1: "Negative", 2: "Neutral"}
 
-# FinBERT's label mapping: 0=positive, 1=negative, 2=neutral
-# This is the correct mapping for ProsusAI/finbert
-label_map = {0: "Positive", 1: "Negative", 2: "Neutral"}
+    return model, tokenizer, lmap
+
+model, tokenizer, label_map = load_model()
 
 # ==================== HELPER FUNCTIONS ====================
 import requests
@@ -464,11 +279,30 @@ def get_yf_session():
     })
     return session
 
-# Initialize Finnhub Client
+# Initialize Finnhub Client (NO HARDCODING!)
 @st.cache_resource
 def get_finnhub_client():
-    # Hardcoded key as per user request to "make it work"
-    return finnhub.Client(api_key="d62s9vhr01qnpu82gau0d62s9vhr01qnpu82gaug")
+    """Load Finnhub API key from environment variable"""
+    import os
+    from dotenv import load_dotenv
+    
+    load_dotenv()  # Load from .env file
+    api_key = os.getenv('FINNHUB_API_KEY')
+    
+    if not api_key:
+        st.error("""
+        ⚠️ **Finnhub API Key Not Found!**
+        
+        Please create a `.env` file in the project root with:
+        ```
+        FINNHUB_API_KEY=your_api_key_here
+        ```
+        
+        Get your free API key at: https://finnhub.io/register
+        """)
+        st.stop()
+    
+    return finnhub.Client(api_key=api_key)
 
 finnhub_client = get_finnhub_client()
 
@@ -480,38 +314,80 @@ def predict_sentiment(text):
         logits = outputs.logits
         probs = F.softmax(logits, dim=-1).numpy()[0]
     
-    # Get probabilities for each class
-    positive_prob = probs[0]  # index 0 = positive
-    negative_prob = probs[1]  # index 1 = negative
-    neutral_prob = probs[2]   # index 2 = neutral
-    
+    # Build confidence dict dynamically from label_map (loaded from config.json)
+    # This ensures the confidence scores ALWAYS match the model's actual label mapping.
+    # label_map = {0: "Positive", 1: "Negative", 2: "Neutral"} (finbert native)
+    confidence = {label_map[i]: round(float(probs[i]), 4) for i in range(len(probs))}
+
     # PURE AI MODEL PREDICTION (No Hardcoding)
-    # The model has been fine-tuned to handle these cases natively.
-    sentiment = label_map[np.argmax(probs)]
-    
-    return sentiment, {"Positive": round(float(positive_prob), 4), "Negative": round(float(negative_prob), 4), "Neutral": round(float(neutral_prob), 4)}
+    sentiment = label_map[int(np.argmax(probs))]
+
+    return sentiment, confidence
+
 
 def search_companies(query):
-    """Search for companies and return matching stocks"""
+    """
+    Search for companies using Finnhub API (NO hardcoded database!)
+    Falls back to yfinance if Finnhub fails
+    """
     if not query or len(query) < 2:
         return []
     
-    query_lower = query.lower()
     matches = []
     
-    for ticker, (name, region, sector) in GLOBAL_STOCKS.items():
-        if query_lower in ticker.lower() or query_lower in name.lower():
+    # Strategy 1: Finnhub Symbol Lookup API (Dynamic!)
+    try:
+        results = finnhub_client.symbol_lookup(query)
+        for item in results.get('result', [])[:15]:  # Limit to 15 results
+            ticker = item.get('symbol', '')
+            name = item.get('description', ticker)
+            display_symbol = item.get('displaySymbol', ticker)
+            stock_type = item.get('type', 'Stock')
+            
+            # Determine region from ticker suffix
+            if ticker.endswith('.NS'):
+                region = 'India'
+            elif ticker.endswith(('.HK', '.SS', '.SZ')):
+                region = 'Asia'
+            elif ticker.endswith('.T'):
+                region = 'Japan'
+            elif ticker.endswith('.KS'):
+                region = 'Korea'
+            elif ticker.endswith(('.PA', '.DE', '.L')):
+                region = 'Europe'
+            else:
+                region = 'US'
+            
+            # Get sector from company profile (if available)
+            sector = 'Unknown'
+            try:
+                profile = finnhub_client.company_profile2(symbol=ticker)
+                if profile:
+                    sector = profile.get('finnhubIndustry', 'Unknown')
+            except:
+                pass
+            
             matches.append((ticker, name, region, sector))
+        
+        if matches:
+            return matches[:15]
     
-    # Try yfinance if no matches found
-    if not matches:
-        try:
-            stock = yf.Ticker(query.upper())
-            info = stock.info
-            if info.get('longName'):
-                matches.append((query.upper(), info.get('longName', query.upper()), 'Other', 'Unknown'))
-        except:
-            pass
+    except Exception as e:
+        print(f"Finnhub search failed: {e}")
+    
+    # Strategy 2: YFinance fallback (if Finnhub fails)
+    try:
+        stock = yf.Ticker(query.upper())
+        info = stock.info
+        if info.get('longName'):
+            matches.append((
+                query.upper(), 
+                info.get('longName', query.upper()), 
+                'Other', 
+                info.get('sector', 'Unknown')
+            ))
+    except:
+        pass
     
     return matches[:15]
 
@@ -558,10 +434,9 @@ def get_stock_data(ticker, period="1mo"):
                 except:
                     pass
                 
-                # Fill fallback if info fetch failed
-                if not info or info.get('longName') == ticker:
-                    if ticker in GLOBAL_STOCKS:
-                        info['longName'] = GLOBAL_STOCKS[ticker][0]
+                # If info fetch failed, just use ticker as name (NO HARDCODING!)
+                if not info:
+                    info = {'longName': ticker, 'sector': 'N/A'}
                 
                 return df, info
         except Exception as e:
@@ -701,6 +576,89 @@ def get_region_badge(region):
                       'Thailand': 'region-asia', 'Indonesia': 'region-asia', 'Europe': 'region-europe'}
     return region_classes.get(region, 'region-us')
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_currency_rates():
+    """Fetch real-time USD/INR exchange rate using yfinance API"""
+    try:
+        # Fetch USD/INR rate using forex ticker
+        forex_ticker = yf.Ticker("USDINR=X")
+        data = forex_ticker.history(period="1d")
+        
+        if not data.empty:
+            current_rate = data['Close'].iloc[-1]
+            prev_close = data['Open'].iloc[0]
+            change = current_rate - prev_close
+            change_pct = (change / prev_close) * 100
+            
+            return {
+                'rate': round(current_rate, 2),
+                'change': round(change, 2),
+                'change_pct': round(change_pct, 2),
+                'timestamp': data.index[-1].strftime('%Y-%m-%d %H:%M')
+            }
+    except Exception as e:
+        print(f"Error fetching currency rates: {e}")
+    
+    # Fallback if API fails
+    return {'rate': 83.0, 'change': 0, 'change_pct': 0, 'timestamp': 'N/A'}
+
+@st.cache_data(ttl=300)
+def get_stock_currency_conversion(stock_currency):
+    """
+    Get conversion rates for a stock's currency to USD and INR
+    Args:
+        stock_currency: Currency code (USD, JPY, EUR, GBP, INR, etc.)
+    Returns:
+        dict with rates to USD and INR
+    """
+    if not stock_currency or stock_currency == 'N/A':
+        stock_currency = 'USD'
+    
+    stock_currency = stock_currency.upper()
+    
+    try:
+        # If already USD, rate to USD is 1
+        if stock_currency == 'USD':
+            usd_rate = 1.0
+        else:
+            # Fetch currency to USD rate
+            ticker_symbol = f"{stock_currency}USD=X"
+            ticker = yf.Ticker(ticker_symbol)
+            data = ticker.history(period="1d")
+            if not data.empty:
+                usd_rate = data['Close'].iloc[-1]
+            else:
+                usd_rate = None
+        
+        # If already INR, rate to INR is 1
+        if stock_currency == 'INR':
+            inr_rate = 1.0
+        else:
+            # Fetch currency to INR rate
+            ticker_symbol = f"{stock_currency}INR=X"
+            ticker = yf.Ticker(ticker_symbol)
+            data = ticker.history(period="1d")
+            if not data.empty:
+                inr_rate = data['Close'].iloc[-1]
+            else:
+                # Fallback: convert via USD
+                if usd_rate:
+                    usd_inr = get_currency_rates()['rate']
+                    inr_rate = usd_rate * usd_inr
+                else:
+                    inr_rate = None
+        
+        return {
+            'currency': stock_currency,
+            'to_usd': round(usd_rate, 4) if usd_rate else None,
+            'to_inr': round(inr_rate, 2) if inr_rate else None
+        }
+    
+    except Exception as e:
+        print(f"Error fetching conversion for {stock_currency}: {e}")
+        return {'currency': stock_currency, 'to_usd': None, 'to_inr': None}
+
+
 # ==================== MAIN DASHBOARD UI ====================
 
 # 1. Market Ticker Section (Interactive)
@@ -785,6 +743,31 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
 </style>
+""", unsafe_allow_html=True)
+
+# ==================== CURRENCY RATES SECTION ====================
+# Fetch real-time USD/INR rate
+currency_data = get_currency_rates()
+
+st.markdown(f"""
+<div class="glass-card" style="text-align: center; padding: 1rem; margin: 1rem 0;">
+    <h3 style="color: #00d4aa; margin: 0 0 0.5rem 0;">💱 Currency Exchange Rates</h3>
+    <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+        <div>
+            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">USD/INR</p>
+            <p style="font-size: 1.8rem; font-weight: 700; margin: 0.2rem 0; color: #ffffff;">₹{currency_data['rate']}</p>
+            <p style="color: {'#00d4aa' if currency_data['change'] >= 0 else '#ff6b6b'}; margin: 0; font-size: 0.9rem;">
+                {'+' if currency_data['change'] >= 0 else ''}{currency_data['change']} ({'+' if currency_data['change_pct'] >= 0 else ''}{currency_data['change_pct']}%)
+            </p>
+            <p style="color: #64748b; font-size: 0.75rem; margin-top: 0.3rem;">Last updated: {currency_data['timestamp']}</p>
+        </div>
+        <div>
+            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">Reference</p>
+            <p style="font-size: 1.2rem; font-weight: 600; margin: 0.2rem 0; color: #ffffff;">1 USD = ₹{currency_data['rate']}</p>
+            <p style="font-size: 1.2rem; font-weight: 600; margin: 0.2rem 0; color: #ffffff;">1 INR = ${round(1/currency_data['rate'], 4)}</p>
+        </div>
+    </div>
+</div>
 """, unsafe_allow_html=True)
 
 # 3. Features Grid
@@ -889,7 +872,7 @@ with tab2:
     st.markdown(f"""
     <div class="glass-card">
         <h3 style="color: white; margin-bottom: 1rem;">🔍 Global Market Research</h3>
-        <p style="color: #a0aec0;">Search from <strong style="color: #00d4aa;">{len(GLOBAL_STOCKS)}+ stocks</strong> across global markets</p>
+        <p style="color: #a0aec0;">Search <strong style="color: #00d4aa;">any stock</strong> worldwide via live API</p>
         <div style="margin-top: 0.8rem;">
             <span class="region-badge region-us">US Market</span>
             <span class="region-badge region-india">NSE India</span>
