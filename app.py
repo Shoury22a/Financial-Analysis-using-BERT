@@ -691,10 +691,7 @@ elif page == "📈 Stock Explorer":
                 display = hist.tail(10)[["Open","High","Low","Close","Volume"]].copy()
                 display = display.round(2)
                 display.index = display.index.strftime("%b %d")
-                st.dataframe(
-                    display.style.background_gradient(subset=["Close"], cmap="RdYlGn"),
-                    use_container_width=True,
-                )
+                st.dataframe(display, use_container_width=True)
             with col_r:
                 st.markdown('<div class="section-header">Daily Returns Distribution</div>', unsafe_allow_html=True)
                 returns = hist["Close"].pct_change().dropna() * 100
@@ -760,9 +757,9 @@ Inflation data comes in line with expectations, markets react mildly."""
                     results.append({
                         "Headline": line,
                         "Sentiment": sentiment,
-                        "Positive %": f"{probs['Positive']*100:.1f}",
-                        "Negative %": f"{probs['Negative']*100:.1f}",
-                        "Neutral %":  f"{probs['Neutral']*100:.1f}",
+                        "Positive %": f"{probs.get('Positive', 0)*100:.1f}",
+                        "Negative %": f"{probs.get('Negative', 0)*100:.1f}",
+                        "Neutral %":  f"{probs.get('Neutral', 0)*100:.1f}",
                         "Confidence %": f"{max(probs.values())*100:.1f}",
                     })
                     progress.progress((i + 1) / len(lines))
@@ -849,7 +846,11 @@ Inflation data comes in line with expectations, markets react mildly."""
                     c = {"Positive": "#10b981", "Negative": "#ef4444", "Neutral": "#f59e0b"}
                     return f"color: {c.get(val, 'white')}; font-weight: 700;"
 
-                styled = df.style.applymap(color_sentiment, subset=["Sentiment"])
+                # Use .map() — applymap() is deprecated in pandas 2.x
+                try:
+                    styled = df.style.map(color_sentiment, subset=["Sentiment"])
+                except AttributeError:
+                    styled = df.style.applymap(color_sentiment, subset=["Sentiment"])
                 st.dataframe(styled, use_container_width=True)
 
                 # Download
