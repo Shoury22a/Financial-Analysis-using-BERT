@@ -310,9 +310,17 @@ GLOBAL_STOCKS = {
 
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_stock(ticker: str, period: str = "1mo"):
-    """Fetch stock OHLCV + info using yfinance."""
+    """Fetch stock OHLCV + info using yfinance with browser headers to avoid blocks."""
+    import requests
     try:
-        stock = yf.Ticker(ticker)
+        # Use a requests session with browser User-Agent to avoid Yahoo Finance blocks
+        session = requests.Session()
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/120.0.0.0 Safari/537.36"
+        })
+        stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
         if hist.empty:
             return None, {}
@@ -322,7 +330,7 @@ def fetch_stock(ticker: str, period: str = "1mo"):
             info = {
                 "name":             raw.get("longName", ticker),
                 "sector":           raw.get("sector", "N/A"),
-                "currentPrice":     raw.get("currentPrice") or (hist["Close"].iloc[-1] if not hist.empty else None),
+                "currentPrice":     raw.get("currentPrice") or (float(hist["Close"].iloc[-1]) if not hist.empty else None),
                 "previousClose":    raw.get("previousClose"),
                 "marketCap":        raw.get("marketCap"),
                 "volume":           raw.get("volume"),
@@ -601,14 +609,29 @@ elif page == "📈 Stock Explorer":
     """, unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # ── Session state for ticker so quick picks actually work ──
+    if "stock_ticker" not in st.session_state:
+        st.session_state["stock_ticker"] = "AAPL"
+
+    # Quick picks
+    st.markdown('<div style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:8px;">Quick picks:</div>', unsafe_allow_html=True)
+    quick_tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA", "AMZN", "META", "TCS.NS", "RELIANCE.NS", "INFY.NS"]
+    qcols = st.columns(len(quick_tickers))
+    for i, tk in enumerate(quick_tickers):
+        if qcols[i].button(tk, key=f"qt_{tk}", use_container_width=True):
+            st.session_state["stock_ticker"] = tk
+            st.rerun()
+
     col_search, col_period = st.columns([3, 1])
     with col_search:
         ticker_input = st.text_input(
             "Stock Ticker",
-            value="AAPL",
-            placeholder="e.g. AAPL, TSLA, RELIANCE.NS, TCS.NS …",
+            value=st.session_state["stock_ticker"],
+            placeholder="e.g. AAPL, TSLA, RELIANCE.NS …",
             label_visibility="collapsed",
         )
+        if ticker_input.strip().upper() != st.session_state["stock_ticker"]:
+            st.session_state["stock_ticker"] = ticker_input.strip().upper()
     with col_period:
         period = st.selectbox(
             "Period",
@@ -616,39 +639,32 @@ elif page == "📈 Stock Explorer":
             label_visibility="collapsed",
         )
 
-    # Quick picks
-    st.markdown('<div style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:6px;">Quick picks:</div>', unsafe_allow_html=True)
-    quick_cols = st.columns(10)
-    quick_tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA", "AMZN", "META", "TCS.NS", "RELIANCE.NS", "INFY.NS"]
-    for i, tk in enumerate(quick_tickers):
-        if quick_cols[i].button(tk, key=f"qt_{tk}"):
-            ticker_input = tk
-
     st.markdown("---")
 
-    if ticker_input:
-        with st.spinner(f"Fetching data for {ticker_input.upper()}..."):
-            hist, info = fetch_stock(ticker_input.upper(), period)
+    active_ticker = st.session_state.get("stock_ticker", "AAPL").strip().upper()
+    if active_ticker:
+        with st.spinner(f"Fetching data for {active_ticker}..."):
+            hist, info = fetch_stock(active_ticker, period)
 
         if hist is None or hist.empty:
-            st.error(f"Could not fetch data for **{ticker_input.upper()}**. Please check the ticker symbol.")
+            st.error(f"⚠️ Could not fetch data for **{active_ticker}**. Yahoo Finance may be rate-limiting — wait a few seconds and try again.")
         else:
-            current  = hist["Close"].iloc[-1]
-            prev     = info.get("previousClose") or hist["Close"].iloc[-2] if len(hist) > 1 else current
-            change   = current - prev
-            chg_pct  = (change / prev) * 100 if prev else 0
+            current   = float(hist["Close"].iloc[-1])
+            prev_raw  = info.get("previousClose")
+            prev      = float(prev_raw) if prev_raw else (float(hist["Close"].iloc[-2]) if len(hist) > 1 else current)
+            change    = current - prev
+            chg_pct   = (change / prev) * 100 if prev else 0
             chg_color = "#10b981" if change >= 0 else "#ef4444"
             chg_arrow = "▲" if change >= 0 else "▼"
 
-            # Header row
             st.markdown(f"""
             <div style='display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:24px;'>
                 <div>
                     <div style='font-size:32px; font-weight:800; color:white;'>
-                        {info.get("name", ticker_input.upper())}
+                        {info.get("name", active_ticker)}
                     </div>
                     <div style='margin-top:4px;'>
-                        <span class='badge'>{ticker_input.upper()}</span>
+                        <span class='badge'>{active_ticker}</span>
                         <span class='badge'>{info.get("sector","N/A")}</span>
                     </div>
                 </div>
@@ -681,7 +697,7 @@ elif page == "📈 Stock Explorer":
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown('<div class="section-header">Price Chart</div>', unsafe_allow_html=True)
-            st.plotly_chart(make_candlestick(hist, ticker_input.upper()), use_container_width=True,
+            st.plotly_chart(make_candlestick(hist, active_ticker), use_container_width=True,
                             config={"displayModeBar": False})
 
             # Volume + Returns
