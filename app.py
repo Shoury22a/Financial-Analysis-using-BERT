@@ -839,19 +839,55 @@ Inflation data comes in line with expectations, markets react mildly."""
                     )
                     st.plotly_chart(fig_conf, use_container_width=True, config={"displayModeBar": False})
 
-                # Results table
+                # Results table — static HTML (no shaking)
                 st.markdown('<div class="section-header">Detailed Results</div>', unsafe_allow_html=True)
 
-                def color_sentiment(val):
-                    c = {"Positive": "#10b981", "Negative": "#ef4444", "Neutral": "#f59e0b"}
-                    return f"color: {c.get(val, 'white')}; font-weight: 700;"
+                SENT_COLORS = {"Positive": "#10b981", "Negative": "#ef4444", "Neutral": "#f59e0b"}
+                rows_html = ""
+                for _, row in df.iterrows():
+                    sc = SENT_COLORS.get(row["Sentiment"], "#ffffff")
+                    rows_html += f"""
+                    <tr>
+                        <td style='padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05);
+                                   color:rgba(255,255,255,0.85); font-size:13px; max-width:400px;'>{row['Headline']}</td>
+                        <td style='padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05);
+                                   color:{sc}; font-weight:700; white-space:nowrap;'>{row['Sentiment']}</td>
+                        <td style='padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05);
+                                   color:rgba(255,255,255,0.6); text-align:center;'>{row['Positive %']}%</td>
+                        <td style='padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05);
+                                   color:rgba(255,255,255,0.6); text-align:center;'>{row['Negative %']}%</td>
+                        <td style='padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05);
+                                   color:rgba(255,255,255,0.6); text-align:center;'>{row['Neutral %']}%</td>
+                        <td style='padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05);
+                                   color:{sc}; font-weight:600; text-align:center;'>{row['Confidence %']}%</td>
+                    </tr>"""
 
-                # Use .map() — applymap() is deprecated in pandas 2.x
-                try:
-                    styled = df.style.map(color_sentiment, subset=["Sentiment"])
-                except AttributeError:
-                    styled = df.style.applymap(color_sentiment, subset=["Sentiment"])
-                st.dataframe(styled, use_container_width=True)
+                st.markdown(f"""
+                <div style='overflow-x:auto;'>
+                <table style='width:100%; border-collapse:collapse;
+                              background:rgba(255,255,255,0.02);
+                              border:1px solid rgba(255,255,255,0.06);
+                              border-radius:12px; overflow:hidden;'>
+                    <thead>
+                        <tr style='background:rgba(0,212,170,0.08);'>
+                            <th style='padding:12px 14px; text-align:left; font-size:11px; font-weight:700;
+                                       letter-spacing:1px; color:rgba(255,255,255,0.5); text-transform:uppercase;'>Headline</th>
+                            <th style='padding:12px 14px; font-size:11px; font-weight:700;
+                                       letter-spacing:1px; color:rgba(255,255,255,0.5); text-transform:uppercase;'>Sentiment</th>
+                            <th style='padding:12px 14px; text-align:center; font-size:11px; font-weight:700;
+                                       letter-spacing:1px; color:rgba(255,255,255,0.5); text-transform:uppercase;'>Positive</th>
+                            <th style='padding:12px 14px; text-align:center; font-size:11px; font-weight:700;
+                                       letter-spacing:1px; color:rgba(255,255,255,0.5); text-transform:uppercase;'>Negative</th>
+                            <th style='padding:12px 14px; text-align:center; font-size:11px; font-weight:700;
+                                       letter-spacing:1px; color:rgba(255,255,255,0.5); text-transform:uppercase;'>Neutral</th>
+                            <th style='padding:12px 14px; text-align:center; font-size:11px; font-weight:700;
+                                       letter-spacing:1px; color:rgba(255,255,255,0.5); text-transform:uppercase;'>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>{rows_html}</tbody>
+                </table>
+                </div>
+                """, unsafe_allow_html=True)
 
                 # Download
                 csv = df.to_csv(index=False)
