@@ -310,20 +310,31 @@ GLOBAL_STOCKS = {
 
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_stock(ticker: str, period: str = "1mo"):
-    """Fetch stock OHLCV + info using yfinance with browser headers to avoid blocks."""
-    import requests
+    """
+    Fetch stock OHLCV + info using yfinance.
+    Uses curl_cffi (Chrome TLS impersonation) to bypass Yahoo Finance
+    Cloudflare protection on cloud/HuggingFace deployments.
+    """
     try:
-        # Use a requests session with browser User-Agent to avoid Yahoo Finance blocks
-        session = requests.Session()
-        session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                          "AppleWebKit/537.36 (KHTML, like Gecko) "
-                          "Chrome/120.0.0.0 Safari/537.36"
-        })
+        try:
+            # Best option: curl_cffi impersonates a real Chrome browser (TLS fingerprint)
+            from curl_cffi import requests as cffi_requests
+            session = cffi_requests.Session(impersonate="chrome110")
+        except ImportError:
+            # Fallback: plain requests with User-Agent
+            import requests as _requests
+            session = _requests.Session()
+            session.headers.update({
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/120.0.0.0 Safari/537.36"
+            })
+
         stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
-        if hist.empty:
+        if hist is None or hist.empty:
             return None, {}
+
         info = {}
         try:
             raw = stock.info
